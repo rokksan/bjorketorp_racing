@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="576" height="96" viewBox="0 0 576 96" shape-rendering="crispEdges" style="image-rendering:pixelated">
+  <defs>
+    <g id="chicken">
+      <ellipse cx="48" cy="82" rx="25" ry="7" fill="#35251d" opacity=".25"/>
+      <path d="M38 67h7v15h-7zm16 0h7v15h-7z" fill="#d6a33e"/>
+      <ellipse cx="46" cy="51" rx="27" ry="20" fill="#f5e5a4" stroke="#35251d" stroke-width="4"/>
+      <ellipse cx="37" cy="54" rx="12" ry="10" fill="#fff0bd"/>
+      <path d="M22 45h-10v8h7v7h8" fill="#e0bd73" stroke="#35251d" stroke-width="3"/>
+      <path d="M30 40h8v5h-8zm-4 8h8v5h-8zm5 8h8v5h-8" fill="#d6a33e"/>
+      <path d="M52 66h7v4h-7z" fill="#d6a33e"/>
+      <circle cx="69" cy="36" r="15" fill="#f5e5a4" stroke="#35251d" stroke-width="4"/>
+      <path d="M61 20h8v-8h7v8h7v8H61z" fill="#d64d37" stroke="#35251d" stroke-width="3"/>
+      <circle cx="74" cy="33" r="3" fill="#35251d"/><rect x="75" y="32" width="1" height="1" fill="#fff8dc"/>
+      <path d="m78 39 15 5-15 6z" fill="#e3a52d" stroke="#35251d" stroke-width="3"/>
+    </g>
+  </defs>
+  <use href="#chicken" x="0" y="0"/>
+  <use href="#chicken" x="96" y="-1"/>
+  <use href="#chicken" x="192" y="0"/>
+  <use href="#chicken" x="288" y="1"/>
+  <use href="#chicken" x="384" y="0"/>
+  <use href="#chicken" x="480" y="-1"/>
+</svg>

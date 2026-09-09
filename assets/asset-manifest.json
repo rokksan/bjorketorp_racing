@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "style": {
+    "name": "bjorketorp-cozy-rural",
+    "perspective": "isometric-2d",
+    "baseResolution": {
+      "width": 1100,
+      "height": 700
+    },
+    "recommendedSpriteScale": 1,
+    "outlineColor": "#35251d",
+    "palette": {
+      "grass": "#9bc371",
+      "road": "#d3a76b",
+      "barnRed": "#b44732",
+      "hayGold": "#e3b35e",
+      "wood": "#8a5b36",
+      "accentRed": "#d9654c",
+      "boostGold": "#e1a52f",
+      "mud": "#795238"
+    }
+  },
+  "folders": {
+    "chicken": "assets/chicken/",
+    "opponents": "assets/opponents/",
+    "obstacles": "assets/obstacles/",
+    "pickups": "assets/pickups/",
+    "environment": "assets/environment/",
+    "effects": "assets/effects/",
+    "ui": "assets/ui/",
+    "audio": "assets/audio/"
+  },
+  "sprites": {
+    "playerChicken": {
+      "source": "assets/chicken/player-chicken-sheet.svg",
+      "frameWidth": 96,
+      "frameHeight": 96,
+      "anchor": { "x": 48, "y": 78 },
+      "animations": {
+        "idle": { "frames": [0, 1, 2, 3], "fps": 5, "loop": true },
+        "run": { "frames": [4, 5, 6, 7, 8, 9], "fps": 12, "loop": true },
+        "boost": { "frames": [10, 11, 12, 13], "fps": 14, "loop": true },
+        "hit": { "frames": [14, 15, 16], "fps": 10, "loop": false },
+        "finish": { "frames": [17, 18, 19, 20], "fps": 8, "loop": false }
+      }
+    },
+    "opponentChicken": {
+      "source": "assets/opponents/opponent-chicken-sheet.svg",
+      "frameWidth": 96,
+      "frameHeight": 96,
+      "anchor": { "x": 48, "y": 78 },
+      "animations": {
+        "idle": { "frames": [0, 1, 2, 3], "fps": 5, "loop": true },
+        "run": { "frames": [4, 5, 6, 7, 8, 9], "fps": 12, "loop": true },
+        "hit": { "frames": [10, 11, 12], "fps": 10, "loop": false }
+      }
+    },
+    "obstacles": {
+      "hayBale": { "source": "assets/obstacles/hay-bale.svg", "frameWidth": 80, "frameHeight": 64 },
+      "mudPuddle": { "source": "assets/obstacles/mud-puddle.svg", "frameWidth": 96, "frameHeight": 48 }
+    },
+    "pickups": {
+      "boostEgg": { "source": "assets/pickups/boost-egg.svg", "frameWidth": 48, "frameHeight": 48 },
+      "mudBomb": { "source": "assets/pickups/mud-bomb.svg", "frameWidth": 48, "frameHeight": 48 }
+    },
+    "effects": {
+      "dust": { "source": "assets/effects/dust.png", "frameWidth": 64, "frameHeight": 64 },
+      "mudSplash": { "source": "assets/effects/mud-splash.png", "frameWidth": 80, "frameHeight": 80 },
+      "confetti": { "source": "assets/effects/confetti.png", "frameWidth": 32, "frameHeight": 32 }
+    }
+  },
+  "renderingRules": {
+    "sortDynamicObjectsByWorldY": true,
+    "useNearestNeighborForPixelArt": true,
+    "preserveTransparentPadding": true,
+    "shadowOffset": { "x": 0, "y": 18 },
+    "shadowOpacity": 0.33
+  }
+}

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Björketorp marknad: Hönsrace 2000</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="game-shell">
+    <header class="brand">
+      <div>
+        <p class="eyebrow">Björketorp marknad presenterar</p>
+        <h1>Hönsrace <span>2000</span></h1>
+      </div>
+      <p class="tagline">Gasa, gödsla och ge järnet!</p>
+    </header>
+
+    <section class="game-frame" aria-label="Spelområde">
+      <canvas id="game" width="1100" height="700"></canvas>
+      <div id="start-panel" class="panel">
+        <p class="eyebrow">Lördagens stora evenemang</p>
+        <h2>Vem är gårdens snabbaste höna?</h2>
+        <p>Styr med <strong>WASD</strong> eller piltangenterna. Plocka upp power-ups och kör tre varv!</p>
+        <aside class="legend-card">
+          <strong>MARKNADENS LEGEND</strong>
+          <p>Emil “Kladdis” Callheim körde banan på <b>0:42.0</b>. Ingen har varit nära sedan dess.</p>
+          <small>”Han var snabbare än tuppen på fri fot.” – Siv i depån</small>
+        </aside>
+        <fieldset>
+          <legend>Välj bana</legend>
+          <label><input type="radio" name="track" value="market" checked> Björketorp marknad <small>Den klassiska marknadsbanan</small></label>
+          <label><input type="radio" name="track" value="meadow"> Kladdis ängsslinga <small>Snabbare svepande kurvor</small></label>
+          <label><input type="radio" name="track" value="orchard"> Äppellundens åtta <small>Teknisk bana med fler svängar</small></label>
+        </fieldset>
+        <fieldset>
+          <legend>Motståndarnas svårighetsgrad</legend>
+          <label><input type="radio" name="difficulty" value="easy" checked> Lugn gårdstur</label>
+          <label><input type="radio" name="difficulty" value="normal"> Marknadstempo</label>
+          <label><input type="radio" name="difficulty" value="hard"> Tu do or die</label>
+        </fieldset>
+        <fieldset class="chicken-select">
+          <legend>Välj din tävlingshöna</legend>
+          <label><input type="radio" name="chicken" value="original" checked> <b>Gårds-Greta</b><small>Pålitlig och balanserad</small></label>
+          <label><input type="radio" name="chicken" value="rocket"> <b>Raket-Ragnhild</b><small>Två raketmotorer och vansinnig fart</small></label>
+          <label><input type="radio" name="chicken" value="armor"> <b>Pansar-Pär</b><small>Höbalssäker med traktorpansar</small></label>
+          <label><input type="radio" name="chicken" value="bomber"> <b>Ägg-Bombaren</b><small>Startar med en extra lerbomb</small></label>
+        </fieldset>
+        <button id="start-button">Starta loppet</button>
+      </div>
+      <div id="finish-panel" class="panel hidden">
+        <p class="eyebrow">Målgång!</p>
+        <h2 id="finish-title">Bra jobbat!</h2>
+        <p id="finish-copy"></p>
+        <p id="finish-stats" class="finish-stats"></p>
+        <button id="restart-button">Kör igen</button>
+      </div>
+      <div id="pause-panel" class="panel hidden">
+        <p class="eyebrow">Loppet pausat</p>
+        <h2>Depåstopp!</h2>
+        <button id="resume-button">Fortsätt loppet</button>
+        <button id="pause-restart-button">Starta om loppet</button>
+        <button id="menu-button">Till huvudmenyn</button>
+      </div>
+    </section>
+
+    <footer class="controls">
+      <span><b>WASD / pilar</b> styr</span>
+      <span><b>Space</b> använder sparad power-up</span>
+      <span><i class="legend-dot boost"></i> Gult ägg = fartboost</span>
+      <span><i class="legend-dot muck"></i> Brunt ägg = lerbomb</span>
+      <span>Följ vägen och kör tre hela varv</span>
+      <span>Publiken kan kasta flaskor – håll utkik!</span>
+    </footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
