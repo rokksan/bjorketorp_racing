@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="576" height="96" viewBox="0 0 576 96" shape-rendering="crispEdges" style="image-rendering:pixelated">
+<svg xmlns="http://www.w3.org/2000/svg" width="576" height="96" viewBox="0 0 576 96" shape-rendering="crispEdges" stroke-linejoin="miter" stroke-linecap="butt" style="image-rendering:pixelated">
   <defs>
     <g id="chicken">
       <ellipse cx="48" cy="82" rx="25" ry="7" fill="#35251d" opacity=".25"/>

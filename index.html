@@ -13,11 +13,26 @@
         <p class="eyebrow">Björketorp marknad presenterar</p>
         <h1>Hönsrace <span>2000</span></h1>
       </div>
-      <p class="tagline">Gasa, gödsla och ge järnet!</p>
+      <div class="header-actions">
+        <p class="tagline">Gasa, gödsla och ge järnet!</p>
+        <div class="audio-controls" aria-label="Ljudinställningar">
+          <button type="button" id="sound-toggle" class="audio-button" aria-pressed="true">🔊 Ljud</button>
+          <button type="button" id="music-toggle" class="audio-button" aria-pressed="true">♫ Musik</button>
+        </div>
+      </div>
     </header>
 
     <section class="game-frame" aria-label="Spelområde">
       <canvas id="game" width="1100" height="700"></canvas>
+      <div id="touch-controls" class="touch-controls" aria-label="Touchkontroller">
+        <div class="touch-pad" aria-label="Styrning">
+          <button type="button" data-control-key="ArrowUp" aria-label="Upp">▲</button>
+          <button type="button" data-control-key="ArrowLeft" aria-label="Vänster">◀</button>
+          <button type="button" data-control-key="ArrowDown" aria-label="Ner">▼</button>
+          <button type="button" data-control-key="ArrowRight" aria-label="Höger">▶</button>
+        </div>
+        <button type="button" id="touch-item" class="touch-item">POWER-UP</button>
+      </div>
       <div id="start-panel" class="panel">
         <p class="eyebrow">Lördagens stora evenemang</p>
         <h2>Vem är gårdens snabbaste höna?</h2>
@@ -53,6 +68,14 @@
         <h2 id="finish-title">Bra jobbat!</h2>
         <p id="finish-copy"></p>
         <p id="finish-stats" class="finish-stats"></p>
+        <p id="finish-progress" class="finish-progress"></p>
+        <div class="records-wrap">
+          <h3>Lokala banrekord</h3>
+          <table id="record-table">
+            <thead><tr><th>Plats</th><th>Höna</th><th>Tid</th><th>Bana</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
         <button id="restart-button">Kör igen</button>
       </div>
       <div id="pause-panel" class="panel hidden">
@@ -69,6 +92,8 @@
       <span><b>Space</b> använder sparad power-up</span>
       <span><i class="legend-dot boost"></i> Gult ägg = fartboost</span>
       <span><i class="legend-dot muck"></i> Brunt ägg = lerbomb</span>
+      <span><i class="legend-dot shield"></i> Blått ägg = sköld</span>
+      <span><i class="legend-dot nutella"></i> Nutella = riskfylld superboost</span>
       <span>Följ vägen och kör tre hela varv</span>
       <span>Publiken kan kasta flaskor – håll utkik!</span>
     </footer>
