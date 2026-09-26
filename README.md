@@ -110,3 +110,5 @@ Korta inspelade skott, mekanisk omladdning och tre kackelvarianter; potatiskanon
 Validera med node tests/combat.test.cjs samt game, audio och lifecycle-testsviterna.
 
 Torestorps kött och krut finns som egen flik och via startmenyn. Alla fyra vapen kan väljas gratis. Hemkört i slutstycket kostar 120/300/650 mynt och minskar omladdning med 5 procentenheter per nivå; Svågerns axelprotes kostar 100/260/580 och minskar egen rekyl med 12 % per nivå. Tre nivåer per uppgradering och vapen. Köpt trim kombineras med mästerskap. Vapenval, bankortens stridsbaneval och köp sparas lokalt; äldre sparningar migreras utan kostnad eller förlorad progression.
+
+Bakåtskytte (>90° från rörelsen) ger 15 % fartavdrag i 0,8 sekunder, utan framåtdrivande rekyl. Upprepade skott förlänger avdraget men staplar det inte. Gäller spelare och AI. Träffskyddet mellan vapenträffar är 1,5 sekunder; nya träffar under skyddet förlänger inte bromsningen.

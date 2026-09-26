@@ -338,7 +338,7 @@
     setText('stamina-label',p.stamina<.01?'VILA VINGARNA':'SPURT');
     setText('hud-time',C.formatTime(race.time));
     setText('hud-corn',race.corn);
-    if(race.combat){const w=C.WEAPONS[p.gun.weapon];setText('combat-status',p.gun.reload>0?`${w.name.toUpperCase()} · LADDAR ${p.gun.reload.toFixed(1)} s`:`${w.name.toUpperCase()} · M${p.gun.mastery} · ${p.gun.ammo}/${w.ammo} SKOTT · ${p.draft>.5?'SLIPSTREAM +9 %':'KLICK: SKJUT · R: LADDA'}`);}
+    if(race.combat){const w=C.WEAPONS[p.gun.weapon];setText('combat-status',p.gun.reload>0?`${w.name.toUpperCase()} · LADDAR ${p.gun.reload.toFixed(1)} s`:`${w.name.toUpperCase()} · M${p.gun.mastery} · ${p.gun.ammo}/${w.ammo} SKOTT · ${p.gun.rearFire>0?'BAKÅTSKYTTE −15 % FART':p.draft>.5?'SLIPSTREAM +9 %':'KLICK: SKJUT · R: LADDA'}`);}
     setText('lap-time',C.formatTime(race.time-p.lapStart));
     $('stamina-fill').style.width=`${p.stamina/race.maxStamina*100}%`;
     const item= {

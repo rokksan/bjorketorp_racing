@@ -459,7 +459,16 @@
     gun.ammo--;gun.cooldown=w.cooldown;gun.flash=.12;
     if(!gun.ammo)startReload(r,a);
     const dx=Math.cos(gun.aim),dy=Math.sin(gun.aim);
-    const recoil=w.recoil*(1-(gun.tuning?.recoil||0)*.12);a.hitPushX-=dx*recoil;a.hitPushY-=dy*recoil;
+    const recoil=w.recoil*(1-(gun.tuning?.recoil||0)*.12);
+    const speed=Math.hypot(a.vx,a.vy),fx=speed>5?a.vx/speed:Math.cos(a.angle),fy=speed>5?a.vy/speed:Math.sin(a.angle);
+    let rx=-dx*recoil,ry=-dy*recoil;
+    if(dx*fx+dy*fy<-.0001){
+      // Rear fire must not double as a forward rocket boost from recoil.
+      const forward=Math.max(0,rx*fx+ry*fy);rx-=forward*fx;ry-=forward*fy;
+      if(!(gun.rearFire>0)){a.vx*=.85;a.vy*=.85;}
+      gun.rearFire=.8;
+    }
+    a.hitPushX+=rx;a.hitPushY+=ry;
     for(let i=0;i<w.pellets;i++){
       const angle=gun.aim+(i-(w.pellets-1)/2)*w.spread;
       r.bullets.push({x:a.x+dx*12,y:a.y+dy*12,vx:Math.cos(angle)*w.speed,vy:Math.sin(angle)*w.speed,life:w.life,push:w.push,weapon:gun.weapon,owner:a.id});
@@ -471,7 +480,7 @@
   function updateCombat(r,input,dt) {
     for(const a of r.actors) {
       const gun=a.gun;a.invulnerable=Math.max(0,a.invulnerable-dt);a.bumpCooldown=Math.max(0,a.bumpCooldown-dt);
-      gun.cooldown=Math.max(0,gun.cooldown-dt);gun.flash=Math.max(0,gun.flash-dt);
+      gun.rearFire=Math.max(0,(gun.rearFire||0)-dt);gun.cooldown=Math.max(0,gun.cooldown-dt);gun.flash=Math.max(0,gun.flash-dt);
       if(gun.reload>0){gun.reload=Math.max(0,gun.reload-dt);if(gun.reload===0){gun.ammo=WEAPONS[gun.weapon].ammo;if(a.id===0)r.events.push('reload');}}
       if(a.id===0){
         if(Number.isFinite(input.aimX)&&Number.isFinite(input.aimY))gun.aim=Math.atan2(input.aimY-a.y,input.aimX-a.x);
@@ -503,7 +512,7 @@
           const player=r.actors[0];if(Math.hypot(player.x-bullet.x,player.y-bullet.y)<260)r.events.push('potato-hit');
           for(let i=0;i<16;i++){const angle=i*Math.PI/8;r.particles.push({x:bullet.x,y:bullet.y,vx:Math.cos(angle)*65,vy:Math.sin(angle)*65,life:.6,max:.6,color:'#d6bd78'});}
           for(const a of r.actors){const dx=a.x-bullet.x,dy=a.y-bullet.y,d=Math.hypot(dx,dy);if(d>38||a.invulnerable>0||a.finishTime!==null)continue;
-            a.invulnerable=.85;if(a.shield>0){a.shield=0;continue;}
+            a.invulnerable=1.5;if(a.shield>0){a.shield=0;continue;}
             // Scatter across the road, never give a hit racer a forward boost.
             const heading=pointAt(r.track,project(r.track,a.x,a.y).along).angle;
             const fx=Math.cos(heading),fy=Math.sin(heading),nx=-fy,ny=fx;
@@ -520,7 +529,7 @@
       if(r.cover.some(c=>Math.hypot(c.x-bullet.x,c.y-bullet.y)<c.radius)){bullet.life=0;continue;}
       for(const a of r.actors){if(a.id===bullet.owner||a.finishTime!==null||Math.hypot(a.x-bullet.x,a.y-bullet.y)>8)continue;
         bullet.life=0;if(a.invulnerable>0)break;
-        a.invulnerable=.85;
+        a.invulnerable=1.5;
         if(a.shield>0)a.shield=0;
         else {const distance=Math.hypot(a.x-r.actors[0].x,a.y-r.actors[0].y);if(distance<240)r.events.push({name:'cluck',volume:a.id===0?1:.65*(1-distance/240),pan:clamp((a.x-r.actors[0].x)/180,-1,1)});a.hitPushX+=bullet.vx*(bullet.push??.22);a.hitPushY+=bullet.vy*(bullet.push??.22);a.slow=WEAPONS[bullet.weapon||'shotgun'].slow;if(bullet.weapon==='pistol')a.stamina=Math.max(0,a.stamina-.6);else a.boost=0;if(a.id===0){r.bumps++;r.events.push('bump');}}
         for(let i=0;i<5;i++)r.particles.push({x:a.x,y:a.y-8,vx:(i-2)*20,vy:-25+i*8,life:.45,max:.45,color:'#fff0cd'});
@@ -721,7 +730,7 @@
         if(!sliding){if(a.driftCharge>.18&&alignment>.94&&!offroad&&len>0&&a.slow===0){a.cornerBoost=.45;notify(r,'boost','Snygg sväng! Gratis skjuts från svågern.');a.driftCharge=0;}else if(offroad||!len||a.slow>0)a.driftCharge=0;else a.driftCharge=Math.max(0,a.driftCharge-dt*.3);}
       }
       const factor=a.slow>0?.48:a.boost>0?(isPlayer?2.05:1.5):sprint?1.32:a.cornerBoost>0?1.12:a.draft>.5?1.09:1;
-      const desired=base*factor*(offroad?(isPlayer?.53+r.up.boots*.065:.6):1)*(len>0?1:0);
+      const desired=base*factor*(r.combat&&a.gun.rearFire>0?.85:1)*(offroad?(isPlayer?.53+r.up.boots*.065:.6):1)*(len>0?1:0);
       const grip=isPlayer?(r.character.grip+r.up.boots*1.8)*r.build.grip*(a.boost>0?.42:1):8,blend=1-Math.exp(-grip*dt);
       a.vx+=(dx*desired-a.vx)*blend;
       a.vy+=(dy*desired-a.vy)*blend;

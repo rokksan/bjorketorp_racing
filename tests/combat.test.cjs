@@ -73,3 +73,22 @@ for(const def of C.COMBAT_TRACKS){
  assert.ok(crowd.filter(p=>p.y>300).length>=8,'Populate the lower half of the world');
  for(const p of crowd){assert.ok(C.rectangleClear(track,p.x-14,p.y-33,32,43,0),'Farmers stay off the road');if(p.partner!==undefined)assert.equal(crowd[p.partner].partner,p.id);}
 }
+// Backward fire trades race speed for defense and cannot propel the shooter forward.
+for(const weapon of Object.keys(C.WEAPONS)){
+ const r=make(),a=r.actors[0];a.gun.weapon=weapon;a.gun.ammo=C.WEAPONS[weapon].ammo;
+ Object.assign(a,{vx:80,vy:0,angle:0,hitPushX:0,hitPushY:0});a.gun.aim=Math.PI;
+ C.fireShot(r,a);assert.equal(a.gun.rearFire,.8);assert.equal(a.vx,68);assert.ok(a.hitPushX<=.0001,'Rear recoil cannot boost forward');
+ a.gun.cooldown=0;a.gun.reload=0;a.gun.ammo=1;C.fireShot(r,a);assert.equal(a.vx,68,'Repeated rear fire refreshes rather than compounds braking');
+ r.actors=[a];for(let i=0;i<100;i++)C.updateCombat(r,{},1/120);assert.equal(a.gun.rearFire,0);
+ a.gun.cooldown=0;a.gun.reload=0;a.gun.ammo=1;a.gun.aim=0;C.fireShot(r,a);assert.equal(a.gun.rearFire,0,'Forward fire has no rear-fire penalty');
+}
+{
+ const r=make();r.cover=[];r.actors=r.actors.slice(0,1);const a=r.actors[0];
+ const hit=()=>{r.bullets=[{x:a.x,y:a.y,vx:0,vy:0,life:1,weapon:'pistol',owner:9}];C.updateCombat(r,{},1/120);};
+ hit();assert.equal(a.invulnerable,1.5);a.slow=0;a.stamina=2;
+ for(let i=0;i<120;i++)C.updateCombat(r,{},1/120);
+ hit();assert.equal(a.slow,0);assert.equal(a.stamina,2,'Protected hits do not drain stamina or refresh slow');
+ for(let i=0;i<65;i++)C.updateCombat(r,{},1/120);
+ hit();assert.ok(a.slow>0,'Hits work again after protection expires');
+}
+console.log('PASS rear-fire speed tradeoff, no forward recoil exploit, and 1.5-second hit protection.');
