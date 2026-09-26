@@ -95,13 +95,13 @@
       button.setAttribute('aria-pressed',String(chosen===t.id));
       button.setAttribute('aria-label',`${t.name}${locked?`, låses upp efter ${t.unlock} lopp`:''}`);
       const record=save.records[`${t.id}:${selected.mode}:${selected.difficulty}`],medal=save.medals[`${t.id}:${selected.difficulty}`]||0;
-      button.innerHTML=`<canvas class="track-map" width="240" height="116" aria-hidden="true"></canvas>${locked?`<span class="locked-mark">${save.races} / ${t.unlock} LOPP</span>`:chosen===t.id?'<span class="selection-mark">VALD BANA</span>':''}<span class="track-body"><b>${t.short}</b><span class="track-sub">${combat?['Skrotbarrikader & blandade skottlinjer','Trånga lerkrökar · passa dig för moset','Långa rakor · håll koll på studsarna'][index]:t.subtitle}</span><span class="track-meta"><span>${locked?'LÅST':`${combat?['SKROT','TORVTRÄSK','FLYGFÄLT'][index]:['MARKNAD','REGN ÖVER ÅKERN','SKÖRDEFEST I NATT'][index]} · ${combat?'2 VARV':['LÄTT','MEDEL','TEKNISK'][index]}`}</span><span>${record?C.formatTime(record.time):medal?['','BRONS','SILVER','GULD'][medal]:'—'}</span></span></span>`;
+      button.innerHTML=`<canvas class="track-map" width="240" height="116" aria-hidden="true"></canvas>${locked?`<span class="locked-mark">${save.races} / ${t.unlock} LOPP</span>`:chosen===t.id?'<span class="selection-mark">VALD BANA</span>':''}<span class="track-body"><b>${t.short}</b><span class="track-sub">${combat?t.description||t.subtitle:t.subtitle}</span><span class="track-meta"><span>${locked?'LÅST':`${combat?({fair:'MARKNAD',scrapyard:'SKROT',peat:'TORVTRÄSK',airstrip:'TJUVJAKT',park:'FOLKETS PARK'}[t.id]):['MARKNAD','REGN ÖVER ÅKERN','SKÖRDEFEST I NATT'][index]} · ${combat?'2 VARV':['LÄTT','MEDEL','TEKNISK'][index]}`}</span><span>${record?C.formatTime(record.time):medal?['','BRONS','SILVER','GULD'][medal]:'—'}</span></span></span>`;
       button.addEventListener('click',()=> {
         if(combat)selected.combatTrack=t.id;else selected.track=t.id;
         audio.play('click');
         persist();
         renderTracks();
-        setText('season-label',`${['MARKNAD','REGN ÖVER ÅKERN','SKÖRDEFEST I NATT'][index]} I BJÖRKETORP`);
+        setText('season-label',`${combat?t.short.toUpperCase():['MARKNAD','REGN ÖVER ÅKERN','SKÖRDEFEST I NATT'][index]} I BJÖRKETORP`);
       });
       $('track-cards').append(button);
       const ctx=button.querySelector('canvas').getContext('2d');
@@ -581,7 +581,7 @@
     $('combat-loadout')?.classList.toggle('hidden',selected.mode!=='combat');
     $('track-cards').classList.remove('hidden');
     setText('weapon-summary',C.WEAPONS[selected.weapon||'shotgun'].name+' · välj & uppgradera');
-    if(selected.mode==='combat'){setText('session-summary','SKROTKRIGET · 2 VARV · MUSSIKTE');setText('start-copy','Tre stridsbanor. Fyra vapen. Rivalerna har egna vapen — välj ditt motdrag.');setText('mode-copy',`${save.combatMastery?.[selected.weapon]||0} målgångar med valt vapen. Vapenmästerskap: var tredje målgång med ett vapen ger 6 % snabbare omladdning, upp till nivå 3. Inga mynt eller cupsteg påverkas.`);}
+    if(selected.mode==='combat'){setText('session-summary','SKROTKRIGET · 2 VARV · MUSSIKTE');setText('start-copy','Fem stridsbanor. Fyra vapen. Rivalerna har egna vapen — välj ditt motdrag.');setText('mode-copy',`${save.combatMastery?.[selected.weapon]||0} målgångar med valt vapen. Vapenmästerskap: var tredje målgång med ett vapen ger 6 % snabbare omladdning, upp till nivå 3. Inga mynt eller cupsteg påverkas.`);}
   }
   $('open-armory').onclick=()=>setView('armory');
   $('armory-back').onclick=()=>{setView('race');renderTracks();modeCopy();};

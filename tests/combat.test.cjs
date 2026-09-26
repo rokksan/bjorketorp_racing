@@ -92,3 +92,12 @@ for(const weapon of Object.keys(C.WEAPONS)){
  hit();assert.ok(a.slow>0,'Hits work again after protection expires');
 }
 console.log('PASS rear-fire speed tradeoff, no forward recoil exploit, and 1.5-second hit protection.');
+for(const id of ['fair','scrapyard','peat','airstrip','park']){
+ const r=C.makeRace({mode:'combat',combatTrack:id,chicken:'greta'},C.freshSave()),h=r.courseHazards[0],a=r.actors[0];
+ r.time=5.5;C.updateCourseHazards(r,0);assert.equal(h.state,'warning');Object.assign(a,{x:h.x,y:h.y,slow:0});C.updateCourseHazards(r,.01);assert.equal(a.slow,0,'Warning is harmless');
+ r.time=7.5;C.updateCourseHazards(r,0);h.cooldowns={};Object.assign(a,{x:h.x,y:h.y,vx:80,vy:0,slow:0,boost:2});C.updateCourseHazards(r,.01);assert.ok(a.slow>0);assert.equal(a.boost,0);
+ const rival=r.actors[1];Object.assign(rival,{x:h.x,y:h.y,slow:0});C.updateCourseHazards(r,.01);assert.ok(rival.slow>0,'Same hazard affects rivals');
+ r.phase='paused';const before=JSON.stringify(r.courseHazards);C.tick(r,{},1);assert.equal(JSON.stringify(r.courseHazards),before,'Hazards freeze on pause');
+ if(id==='scrapyard'){const outside=C.pointAt(r.track,r.track.length*h.fraction,24);assert.ok(Math.hypot(outside.x-h.x,outside.y-h.y)>h.radius+5,'Safe outside lane remains open');}
+}
+console.log('PASS themed hazards: warning, fair impacts, pause and press bypass.');

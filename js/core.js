@@ -29,11 +29,16 @@
   ];
   const COMBAT_TRACK={id:'scrapyard',name:'Svågerns skrotkrig',short:'Skrotkriget',subtitle:'Stridsprototyp · mus & tangentbord',unlock:0,theme:'spring',music:'market',worldWidth:960,worldHeight:600,width:39,par:100,combat:true,
     points:[[190,485],[92,410],[92,220],[150,100],[390,100],[620,105],[850,150],[866,300],[795,470],[610,492],[465,430],[345,490]],obstacles:[]};
-  const COMBAT_TRACKS=[COMBAT_TRACK,
-    {...COMBAT_TRACK,id:'peat',name:'Kommunens sista torvtäkt',short:'Torvträsket',theme:'rain',music:'meadow',width:34,
+  const COMBAT_TRACKS=[
+    {...COMBAT_TRACK,id:'fair',name:'Björketorps marknad',short:'Marknaden',subtitle:'Knallar, knogmackor & konkurs',description:'Brett marknadstorg, krokiga ståndsgator och en förbannad pristupp.',width:42,
+      points:[[190,485],[85,380],[110,170],[240,90],[410,100],[450,245],[605,240],[640,105],[825,130],[875,340],[740,475],[500,485]],obstacles:[]},
+    {...COMBAT_TRACK,subtitle:'Inga kvitton. Inga vittnen.',description:'Bilpressens innerlinje eller den fria utsidan? Husvagnar bryter eldlinjen.'},
+    {...COMBAT_TRACK,id:'peat',name:'Torvträskets svartbränneri',short:'Svartbränneriet',subtitle:'Kommunalt vatten. Privat sprit.',description:'Lerkrökar och ångande pannor. Håll utsidan fri.',theme:'rain',music:'meadow',width:34,
       points:[[180,490],[85,400],[100,140],[260,85],[400,175],[570,85],[835,125],[875,340],[710,490],[540,405],[350,490]],obstacles:[]},
-    {...COMBAT_TRACK,id:'airstrip',name:'Flygrakan utan bygglov',short:'Flygrakan',theme:'night',music:'orchard',width:44,
-      points:[[160,490],[80,390],[80,150],[180,95],[770,95],[880,190],[880,405],[760,490],[470,490]],obstacles:[]}
+    {...COMBAT_TRACK,id:'airstrip',name:'Torestorps tjuvjakt',short:'Tjuvjakten',subtitle:'Kött, krut & dåligt lokalsinne',description:'Långa skogsrakor och jaktlagets förvarnade hagelsalvor.',theme:'forest',music:'meadow',width:44,
+      points:[[160,490],[80,390],[80,150],[180,95],[770,95],[880,190],[880,405],[760,490],[470,490]],obstacles:[]},
+    {...COMBAT_TRACK,id:'park',name:'Folkets park: sista dansen',short:'Folkets park',subtitle:'Entré 80. Värdighet saknas.',description:'Teknisk passage genom logen, serveringsvagnar och nattfest.',theme:'night',music:'orchard',width:37,
+      points:[[170,480],[85,335],[120,140],[280,90],[400,180],[480,95],[680,90],[850,180],[835,360],[670,465],[535,370],[405,480]],obstacles:[]}
   ];
   const RIVALS=[
     {name:'Besiktnings-Börje',speed:.98,lane:.5,quip:'Den där är fan inte original.'},
@@ -157,7 +162,7 @@
       },settings: {
         music:.45,sfx:.65,ambience:.35,mute:false
       },selected: {
-        weapon:'shotgun',combatTrack:'scrapyard',track:'market',chicken:'greta',difficulty:'easy',mode:'race'
+        weapon:'shotgun',combatTrack:'fair',track:'market',chicken:'greta',difficulty:'easy',mode:'race'
       },skin:'classic'
     };
   }
@@ -477,6 +482,26 @@
     if(distance<240)r.events.push({name:gun.weapon,volume:a.id===0?1:Math.max(.1,.55*(1-distance/240)),pan:clamp((a.x-player.x)/180,-1,1)});
     return true;
   }
+  function makeCourseHazards(track){
+    const definitions=track.id==='fair'?[{kind:'rooster',fraction:.23,offset:0},{kind:'cart',fraction:.74,offset:8}]:track.id==='scrapyard'?[{kind:'press',fraction:.23,offset:0},{kind:'press',fraction:.7,offset:8}]:track.id==='airstrip'?[{kind:'hunter',fraction:.3,offset:0},{kind:'hunter',fraction:.7,offset:8}]:track.id==='peat'?[{kind:'steam',fraction:.27,offset:0},{kind:'steam',fraction:.68,offset:8}]:track.id==='park'?[{kind:'cart',fraction:.32,offset:0},{kind:'cart',fraction:.78,offset:8}]:[];
+    return definitions.map(h=>({...h,...pointAt(track,track.length*h.fraction),state:'idle',cycle:-1,warning:0,radius:h.kind==='steam'?23:h.kind==='hunter'?19:h.kind==='press'?15:10,cooldowns:{}}));
+  }
+  function updateCourseHazards(r,dt){
+    for(const h of r.courseHazards||[]){
+      const phase=(r.time+h.offset)%16,old=h.state;
+      h.state=phase<5?'idle':phase<7?'warning':phase<9?'active':'idle';h.warning=phase>=5&&phase<7?(phase-5)/2:0;
+      const lane=['press','hunter','steam'].includes(h.kind)?-12:h.state==='active'?-r.track.width-12+(phase-7)*(r.track.width+12): -r.track.width-12;
+      const pos=pointAt(r.track,r.track.length*h.fraction,lane);h.x=pos.x;h.y=pos.y;h.angle=pos.angle;
+      if(h.state==='warning'&&old!=='warning'&&Math.hypot(h.x-r.actors[0].x,h.y-r.actors[0].y)<250)notify(r,'count',h.kind==='hunter'?'JAKTLAGET SIKTAR! Ta ytterspåret.':h.kind==='steam'?'PANNAN VISSLAR! Håll undan från ångan.':h.kind==='press'?'BILPRESSEN STÄNGER! Ta ytterspåret.':h.kind==='rooster'?'PRISTUPPEN LADDAR! Lämna plats.':'POTATISVAGN PÅ RYMMEN!');
+      if(h.kind==='hunter'&&h.state==='active'&&old!=='active'&&Math.hypot(h.x-r.actors[0].x,h.y-r.actors[0].y)<260)r.events.push({name:'shotgun',volume:.55});
+      for(const a of r.actors){h.cooldowns[a.id]=Math.max(0,(h.cooldowns[a.id]||0)-dt);
+        if(h.state!=='active'||a.finishTime!==null||h.cooldowns[a.id]>0||Math.hypot(a.x-h.x,a.y-h.y)>h.radius+5)continue;
+        h.cooldowns[a.id]=2;if(a.shield>0){a.shield=0;continue;}
+        a.vx*=.3;a.vy*=.3;a.hitPushX*=.3;a.hitPushY*=.3;a.boost=0;a.slow=Math.max(a.slow,h.kind==='press'?1.1:.7);
+        if(a.id===0){r.bumps++;notify(r,'bump',h.kind==='hunter'?'Hagel i stjärtfjädrarna!':h.kind==='steam'?'Ångkokt höna!':h.kind==='press'?'Tillplattad av svågern. Ytterspåret är öppet!':h.kind==='rooster'?'Pristuppen vann den diskussionen.':'Potatis i fjädrarna!');}
+      }
+    }
+  }
   function updateCombat(r,input,dt) {
     for(const a of r.actors) {
       const gun=a.gun;a.invulnerable=Math.max(0,a.invulnerable-dt);a.bumpCooldown=Math.max(0,a.bumpCooldown-dt);
@@ -570,7 +595,7 @@
     return {
       track,options: {
         ...options
-      },combat:!!def.combat,bullets:[],shotSerial:0,cover:def.combat?[.15,.38,.66].map(f=>({...pointAt(track,track.length*f),radius:12})):[],character:c,build,up,actors,time:0,countdown:3,phase:'countdown',countBeat:4,events:[],corn:0,usedItems:0,bumps:0,particles:[],feedback:trial?'Följ pilarna. Tre varv till mål!':`${RIVALS[save.races%4].name}: ${save.rivalWins?.[save.races%4]>0?'Nu jävlar blir det revansch!':RIVALS[save.races%4].quip}`,feedbackTime:3,lastLap:false,settled:false,result:null,
+      },combat:!!def.combat,courseHazards:makeCourseHazards(track),bullets:[],shotSerial:0,cover:def.combat?(def.id==='scrapyard'?[.38,.41,.44]:def.id==='fair'?[.12,.53,.83]:[.15,.38,.66]).map((f,i)=>({...pointAt(track,track.length*f,def.id==='scrapyard'?(i%2?14:-14):0),radius:def.id==='scrapyard'?15:12,kind:def.id==='scrapyard'?'wreck':def.id==='fair'?'stall':'crate'})):[],character:c,build,up,actors,time:0,countdown:3,phase:'countdown',countBeat:4,events:[],corn:0,usedItems:0,bumps:0,particles:[],feedback:trial?'Följ pilarna. Tre varv till mål!':`${RIVALS[save.races%4].name}: ${save.rivalWins?.[save.races%4]>0?'Nu jävlar blir det revansch!':RIVALS[save.races%4].quip}`,feedbackTime:3,lastLap:false,settled:false,result:null,
       ghost:trial?(save.ghosts?.[track.id]||null):null,
       trace:trial?[[0,actors[0].x,actors[0].y,actors[0].angle]]:[],traceNext:.2,
       pickups:Array.from( {
@@ -784,7 +809,7 @@
       }
       updateProgress(r,a,project(r.track,a.x,a.y),dt);
     }
-    if(r.phase==='racing'){updateCrowd(r,dt);if(r.combat)updateCombat(r,input,dt);}
+    if(r.phase==='racing'){updateCrowd(r,dt);if(r.combat){updateCombat(r,input,dt);updateCourseHazards(r,dt);}}
     if(r.options.mode==='trial'&&r.trace.length<2399&&(r.time>=r.traceNext||r.phase==='finished')) {
       const p=r.actors[0];
       r.trace.push([Math.round(r.time*1000)/1000,Math.round(p.x*10)/10,Math.round(p.y*10)/10,Math.round(p.angle*1000)/1000]);
@@ -860,7 +885,7 @@
     return {x:a[1]+(b[1]-a[1])*f,y:a[2]+(b[2]-a[2])*f,angle:b[3]};
   }
   const api= {
-    WEAPON_UPGRADES,buyWeaponUpgrade,WEAPONS,COMBAT_TRACKS,COMBAT_TRACK,fireShot,updateCombat,CATALOG,catalogUnlocked,buyCosmetic,equipCosmetic,updateTractor,updateCross,BUILDS,RIVALS,roadWidth,CROWD_DIALOGUE,makeCrowd,CHARACTERS,TRACKS,UPGRADES,CONTRACTS,clamp,freshSave,sanitizeSave,buyUpgrade,claimContract,buildTrack,pointAt,project,rectangleClear,makeRace,tick,ranking,useItem,settleRace,finishResult,formatTime,ghostAt
+    makeCourseHazards,updateCourseHazards,WEAPON_UPGRADES,buyWeaponUpgrade,WEAPONS,COMBAT_TRACKS,COMBAT_TRACK,fireShot,updateCombat,CATALOG,catalogUnlocked,buyCosmetic,equipCosmetic,updateTractor,updateCross,BUILDS,RIVALS,roadWidth,CROWD_DIALOGUE,makeCrowd,CHARACTERS,TRACKS,UPGRADES,CONTRACTS,clamp,freshSave,sanitizeSave,buyUpgrade,claimContract,buildTrack,pointAt,project,rectangleClear,makeRace,tick,ranking,useItem,settleRace,finishResult,formatTime,ghostAt
   };
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
   else root.FarmRace=api;
