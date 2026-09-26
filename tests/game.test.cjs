@@ -171,7 +171,7 @@ test('A controlled slide rewards straightening, but grass does not',()=>{
 console.log(`\n${passed} simulation, progression and art tests passed.`);
 
 test('Sparse harvest retains total value and broken bottles leave expiring glass',()=>{
- const r=C.makeRace({track:'market',chicken:'greta',mode:'race'},C.freshSave());assert.equal(r.cornPoints.length,6);r.corn=6;const value=C.finishResult(r).coins;r.corn=0;assert.equal(value-C.finishResult(r).coins,36);
+ const r=C.makeRace({track:'market',chicken:'greta',mode:'race'},C.freshSave());assert.equal(r.cornPoints.length,6);r.corn=6;const value=C.finishResult(r).coins;r.corn=0;assert.equal(value-C.finishResult(r).coins,60);
  r.countdown=0;r.phase='racing';r.crowdThrow=100;r.projectiles=[{x:250,y:50,sx:0,sy:0,age:1.29,duration:1.3,radius:10,kind:'bottle'}];C.tick(r,{},.02);assert.equal(r.puddles[0].kind,'glass');for(let i=0;i<500;i++)C.tick(r,{},.01);assert.ok(!r.puddles.some(p=>p.kind==='glass'));
 });
 test('Cross excursions reach the infield and provoke nearby farmers',()=>{

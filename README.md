@@ -18,7 +18,7 @@ python3 -m http.server 8000
 - **Escape:** pausa / fortsätt. Fokusförlust och dolda flikar pausar automatiskt.
 - **Pekskärm:** styrkors, spurt och föremålsknapp. Knapparna visas också i smala fönster.
 
-Följ de vita pilarna i tre varv. Majs ger två extra gårdsmynt per korn vid målgång. Gräset bromsar och banans yttre gräns hindrar genvägar genom infielden. De små höbalarna och lerpölarna är avsiktliga hinder vid vägkanten; träd, hus, odlingar och övrig dekor ligger utanför hela körfältet.
+Följ de vita pilarna i tre varv. Varje upplockat mynt ger 10 gårdsmynt vid målgång. Gräset bromsar och banans yttre gräns hindrar genvägar genom infielden. De små höbalarna och lerpölarna är avsiktliga hinder vid vägkanten; träd, hus, odlingar och övrig dekor ligger utanför hela körfältet.
 
 ## Något att komma tillbaka till
 
@@ -116,3 +116,12 @@ Bakåtskytte (>90° från rörelsen) ger 15 % fartavdrag i 0,8 sekunder, utan fr
 Mobil: loppet använder hela webbläsarytan och begär helskärm där API:t stöds. Två genomskinliga spakar ligger över banan: vänster ger analog rörelse (ytterläge spurt), höger siktar och skjuter när den dras ut. Separata knappar för omladdning, föremål och helskärm. Liggende format ger störst bana; bildförhållandet bevaras även stående. Pointer capture per spak samt återställning vid paus, fokusförlust och rotation förebygger fastnade kommandon. Webbläsare utan Fullscreen API använder samma kant-till-kant-layout inom tillgänglig webbläsaryta.
 
 Stridsbanornas teman: Björketorps marknad (första bankortet, stånd, pristupp och potatisvagn), Skrotkriget (bilpressar med säker ytterlinje och husvagnsskydd), Torvträskets svartbränneri (pannor och ångfält), Torestorps tjuvjakt (ersätter Flygrakans tema, förvarnade hagelzoner) och Folkets park (loge, lampor och serveringsvagnar). Banfaror följer en 16-sekunders cykel med två sekunders ofarlig varning och två sekunders aktiv fas. Två zoner per bana har förskjutna cykler; endast en är aktiv åt gången. Samma bromseffekt för spelare och AI; sköld absorberar en träff. Kranen är tills vidare dekor, inga hopp eller sista-varvet-ras är implementerade.
+
+
+### Stridsbanornas miljöer
+
+Marknaden har grus, tält, loppisstånd och rastbord. Skrotgården har smutsig hårdmark, bilstaplar, däckhögar, containrar och stängsel. Torestorps jaktmark har mörk skogsmark, jakttorn och timmer. Bränneriet har torvmark, vattenfläckar, vass och hembränningspannor. Folkparken har mörk beläggning, dansgolv, scen och ljusslingor. Ny dekor placeras utanför körfältet och publikens utrymme.
+
+Skrotens vakthund varnar i två sekunder innan den rusar över vägen. Den bromsar både spelaren och rivalerna, kan blockeras med sköld och stannar när spelet pausas.
+
+Avslutade vanliga lopp och stridslopp ger 60 grundmynt, placeringsbonus (45/34/27/21/18), 10 per upplockat mynt, 15 för ett rent lopp och svårighetsbonus (0/8/16). Tidsträning ger inga mynt.

@@ -327,7 +327,7 @@
     setText('result-copy',`${race.track.name} · ${trial?'Tidsträning':`${result.position}:a av 5 hönor`} ${result.newRecord?'· Nytt banrekord!':''}${trial?'':` · ${C.RIVALS[0].name}: ${save.rivalWins[0]>0?'Nästa gång tar jag fan traktorn.':C.RIVALS[0].quip}`}`);
     A.drawPortrait($('result-bird'),p.color,save.skin,save.outfit);
     $('result-stats').innerHTML=`<div><span>LOPPTID</span><strong>${C.formatTime(result.time)}</strong></div><div><span>BÄSTA VARV</span><strong>${C.formatTime(result.bestLap)}</strong></div><div><span>MAJSKORN</span><strong>${result.corn}</strong></div>`;
-    $('result-rewards').innerHTML=race.combat?`Vapenmästerskap +1<small>${C.WEAPONS[race.actors[0].gun.weapon].name}: ${result.mastery} lopp · nivå ${Math.min(3,Math.floor(result.mastery/3))}/3. Var tredje målgång ger 6 % snabbare omladdning.</small>`:trial?`Träning ger färdighet.<small>${result.newRecord&&save.ghosts[race.track.id]?'Din nya spökhöna är sparad. Slå den nästa gång!':'Ditt bästa lopp blir en spökhöna att jaga.'} Inga gårdsmynt delas ut.</small>`:`+${result.coins} gårdsmynt<small>Placering + ${result.corn*6} för majs ${result.clean?'+ 10 för ett rent lopp':''} · ${save.coins} mynt i kassan</small>`;
+    $('result-rewards').innerHTML=race.combat?`+${result.coins} gårdsmynt · Vapenmästerskap +1<small>${C.WEAPONS[race.actors[0].gun.weapon].name}: ${result.mastery} lopp · nivå ${Math.min(3,Math.floor(result.mastery/3))}/3. Var tredje målgång ger 6 % snabbare omladdning.</small>`:trial?`Träning ger färdighet.<small>${result.newRecord&&save.ghosts[race.track.id]?'Din nya spökhöna är sparad. Slå den nästa gång!':'Ditt bästa lopp blir en spökhöna att jaga.'} Inga gårdsmynt delas ut.</small>`:`+${result.coins} gårdsmynt<small>Målgång 60 + placering + ${result.corn*10} för majs ${result.clean?'+ 15 för ett rent lopp':''} · ${save.coins} mynt i kassan</small>`;
     const unlocked=C.TRACKS.filter(t=>oldRaces<t.unlock&&save.races>=t.unlock).map(t=>`${t.name} är nu öppen!`);
     if(result.cupMessage)unlocked.push(result.cupMessage);
     if(oldRaces<3&&save.races>=3)unlocked.push('Kommunens avlagda disktrasa upplåst i hönshuset!');
@@ -581,7 +581,7 @@
     $('combat-loadout')?.classList.toggle('hidden',selected.mode!=='combat');
     $('track-cards').classList.remove('hidden');
     setText('weapon-summary',C.WEAPONS[selected.weapon||'shotgun'].name+' · välj & uppgradera');
-    if(selected.mode==='combat'){setText('session-summary','SKROTKRIGET · 2 VARV · MUSSIKTE');setText('start-copy','Fem stridsbanor. Fyra vapen. Rivalerna har egna vapen — välj ditt motdrag.');setText('mode-copy',`${save.combatMastery?.[selected.weapon]||0} målgångar med valt vapen. Vapenmästerskap: var tredje målgång med ett vapen ger 6 % snabbare omladdning, upp till nivå 3. Inga mynt eller cupsteg påverkas.`);}
+    if(selected.mode==='combat'){setText('session-summary','SKROTKRIGET · 2 VARV · MUSSIKTE');setText('start-copy','Fem stridsbanor. Fyra vapen. Rivalerna har egna vapen — välj ditt motdrag.');setText('mode-copy',`${save.combatMastery?.[selected.weapon]||0} målgångar med valt vapen. Vapenmästerskap: var tredje målgång med ett vapen ger 6 % snabbare omladdning, upp till nivå 3. Du tjänar gårdsmynt även här. Cupsteg påverkas inte.`);}
   }
   $('open-armory').onclick=()=>setView('armory');
   $('armory-back').onclick=()=>{setView('race');renderTracks();modeCopy();};

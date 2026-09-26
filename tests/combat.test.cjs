@@ -18,7 +18,7 @@ const make=()=>{const r=C.makeRace({mode:'combat',chicken:'greta',difficulty:'no
  const r=make();let steps=0;
  while(r.phase!=='finished'&&steps++<240*120){const p=r.actors[0],target=C.pointAt(r.track,p.along+20,-23);C.tick(r,{x:target.x-p.x,y:target.y-p.y,sprint:p.stamina>.5,aimX:target.x,aimY:target.y,fire:true},1/120);}
  assert.equal(r.phase,'finished','Combat race must remain finishable');assert.equal(r.actors[0].laps.length,2);
- const save=C.freshSave(),before=JSON.stringify(save);C.settleRace(save,r);assert.equal(save.coins,0);assert.equal(save.races,0);assert.equal(save.combatMastery.shotgun,1);assert.equal(C.settleRace(save,r),null,'Rewards only once');console.log('Combat finish time:',r.time.toFixed(1));
+ const save=C.freshSave(),before=JSON.stringify(save);C.settleRace(save,r);assert.equal(save.coins,r.result.coins);assert.ok(save.coins>=78);assert.equal(save.races,0);assert.equal(save.combatMastery.shotgun,1);assert.equal(C.settleRace(save,r),null,'Rewards only once');console.log('Combat finish time:',r.time.toFixed(1));
 }
 console.log('PASS combat: firing, recoil, reload, hit immunity, cover, pause, two-lap completion and economy isolation.');
 
@@ -101,3 +101,17 @@ for(const id of ['fair','scrapyard','peat','airstrip','park']){
  if(id==='scrapyard'){const outside=C.pointAt(r.track,r.track.length*h.fraction,24);assert.ok(Math.hypot(outside.x-h.x,outside.y-h.y)>h.radius+5,'Safe outside lane remains open');}
 }
 console.log('PASS themed hazards: warning, fair impacts, pause and press bypass.');
+
+{
+ const r=C.makeRace({mode:'combat',combatTrack:'scrapyard'},C.freshSave());
+ const dog=r.courseHazards.find(h=>h.kind==='dog'),a=r.actors[0];
+ assert.ok(dog,'Scrapyard has a guard dog');
+ r.time=13.5;C.updateCourseHazards(r,0);assert.equal(dog.state,'warning');
+ Object.assign(a,{x:dog.x,y:dog.y,slow:0});C.updateCourseHazards(r,.01);assert.equal(a.slow,0);
+ r.time=15;C.updateCourseHazards(r,0);const start={x:dog.x,y:dog.y};
+ r.time=16;C.updateCourseHazards(r,0);assert.equal(dog.state,'active');assert.ok(Math.hypot(dog.x-start.x,dog.y-start.y)>30,'Dog crosses the road');
+ dog.cooldowns={};Object.assign(a,{x:dog.x,y:dog.y,vx:80,vy:0,boost:2,slow:0});C.updateCourseHazards(r,.01);
+ assert.equal(a.boost,0);assert.equal(a.vx,24);assert.ok(a.slow>0);
+ r.phase='paused';const before=JSON.stringify(dog);C.tick(r,{},1);assert.equal(JSON.stringify(dog),before);
+}
+console.log('PASS guard dog warning, crossing, braking and pause.');

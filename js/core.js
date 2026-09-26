@@ -483,7 +483,7 @@
     return true;
   }
   function makeCourseHazards(track){
-    const definitions=track.id==='fair'?[{kind:'rooster',fraction:.23,offset:0},{kind:'cart',fraction:.74,offset:8}]:track.id==='scrapyard'?[{kind:'press',fraction:.23,offset:0},{kind:'press',fraction:.7,offset:8}]:track.id==='airstrip'?[{kind:'hunter',fraction:.3,offset:0},{kind:'hunter',fraction:.7,offset:8}]:track.id==='peat'?[{kind:'steam',fraction:.27,offset:0},{kind:'steam',fraction:.68,offset:8}]:track.id==='park'?[{kind:'cart',fraction:.32,offset:0},{kind:'cart',fraction:.78,offset:8}]:[];
+    const definitions=track.id==='fair'?[{kind:'rooster',fraction:.23,offset:0},{kind:'cart',fraction:.74,offset:8}]:track.id==='scrapyard'?[{kind:'press',fraction:.23,offset:0},{kind:'dog',fraction:.7,offset:8}]:track.id==='airstrip'?[{kind:'hunter',fraction:.3,offset:0},{kind:'hunter',fraction:.7,offset:8}]:track.id==='peat'?[{kind:'steam',fraction:.27,offset:0},{kind:'steam',fraction:.68,offset:8}]:track.id==='park'?[{kind:'cart',fraction:.32,offset:0},{kind:'cart',fraction:.78,offset:8}]:[];
     return definitions.map(h=>({...h,...pointAt(track,track.length*h.fraction),state:'idle',cycle:-1,warning:0,radius:h.kind==='steam'?23:h.kind==='hunter'?19:h.kind==='press'?15:10,cooldowns:{}}));
   }
   function updateCourseHazards(r,dt){
@@ -492,13 +492,13 @@
       h.state=phase<5?'idle':phase<7?'warning':phase<9?'active':'idle';h.warning=phase>=5&&phase<7?(phase-5)/2:0;
       const lane=['press','hunter','steam'].includes(h.kind)?-12:h.state==='active'?-r.track.width-12+(phase-7)*(r.track.width+12): -r.track.width-12;
       const pos=pointAt(r.track,r.track.length*h.fraction,lane);h.x=pos.x;h.y=pos.y;h.angle=pos.angle;
-      if(h.state==='warning'&&old!=='warning'&&Math.hypot(h.x-r.actors[0].x,h.y-r.actors[0].y)<250)notify(r,'count',h.kind==='hunter'?'JAKTLAGET SIKTAR! Ta ytterspåret.':h.kind==='steam'?'PANNAN VISSLAR! Håll undan från ångan.':h.kind==='press'?'BILPRESSEN STÄNGER! Ta ytterspåret.':h.kind==='rooster'?'PRISTUPPEN LADDAR! Lämna plats.':'POTATISVAGN PÅ RYMMEN!');
+      if(h.state==='warning'&&old!=='warning'&&Math.hypot(h.x-r.actors[0].x,h.y-r.actors[0].y)<250)notify(r,'count',h.kind==='hunter'?'JAKTLAGET SIKTAR! Ta ytterspåret.':h.kind==='steam'?'PANNAN VISSLAR! Håll undan från ångan.':h.kind==='press'?'BILPRESSEN STÄNGER! Ta ytterspåret.':h.kind==='dog'?'VAKTHUNDEN ÄR LÖS! Håll undan.':h.kind==='rooster'?'PRISTUPPEN LADDAR! Lämna plats.':'POTATISVAGN PÅ RYMMEN!');
       if(h.kind==='hunter'&&h.state==='active'&&old!=='active'&&Math.hypot(h.x-r.actors[0].x,h.y-r.actors[0].y)<260)r.events.push({name:'shotgun',volume:.55});
       for(const a of r.actors){h.cooldowns[a.id]=Math.max(0,(h.cooldowns[a.id]||0)-dt);
         if(h.state!=='active'||a.finishTime!==null||h.cooldowns[a.id]>0||Math.hypot(a.x-h.x,a.y-h.y)>h.radius+5)continue;
         h.cooldowns[a.id]=2;if(a.shield>0){a.shield=0;continue;}
         a.vx*=.3;a.vy*=.3;a.hitPushX*=.3;a.hitPushY*=.3;a.boost=0;a.slow=Math.max(a.slow,h.kind==='press'?1.1:.7);
-        if(a.id===0){r.bumps++;notify(r,'bump',h.kind==='hunter'?'Hagel i stjärtfjädrarna!':h.kind==='steam'?'Ångkokt höna!':h.kind==='press'?'Tillplattad av svågern. Ytterspåret är öppet!':h.kind==='rooster'?'Pristuppen vann den diskussionen.':'Potatis i fjädrarna!');}
+        if(a.id===0){r.bumps++;notify(r,'bump',h.kind==='hunter'?'Hagel i stjärtfjädrarna!':h.kind==='steam'?'Ångkokt höna!':h.kind==='press'?'Tillplattad av svågern. Ytterspåret är öppet!':h.kind==='dog'?'Vakthunden tog en tugga av farten!':h.kind==='rooster'?'Pristuppen vann den diskussionen.':'Potatis i fjädrarna!');}
       }
     }
   }
@@ -828,7 +828,7 @@
   function finishResult(r) {
     const p=r.actors[0],position=ranking(r).findIndex(a=>a.id===0)+1;
     return {
-      position,time:r.time,bestLap:Math.min(...p.laps),corn:r.corn,items:r.usedItems,clean:r.bumps===0,coins:r.options.mode==='trial'||r.combat?0:([0,45,34,27,21,18][position]+r.corn*6+(r.bumps===0?10:0)+( {
+      position,time:r.time,bestLap:Math.min(...p.laps),corn:r.corn,items:r.usedItems,clean:r.bumps===0,coins:r.options.mode==='trial'?0:(60+[0,45,34,27,21,18][position]+r.corn*10+(r.bumps===0?15:0)+( {
         easy:0,normal:8,hard:16
       }
       [r.options.difficulty]||0)),medal:position<=3?4-position:0
@@ -848,6 +848,7 @@
       else delete save.ghosts[r.track.id];
     }
     if(r.combat){
+      save.coins+=result.coins;
       const weapon=r.actors[0].gun.weapon;
       save.combatMastery=save.combatMastery||{};
       save.combatMastery[weapon]=Math.min(9999,(save.combatMastery[weapon]||0)+1);
