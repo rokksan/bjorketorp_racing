@@ -31,6 +31,21 @@ const afterPurchase=JSON.parse(storage.get('bjorketorp-farm-v2'));assert.equal(a
 get('start-button').onclick();document.hidden=true;documentEvents.visibilitychange();assert.equal(activeRace.phase,'paused');assert.equal(frames.size,0);document.hidden=false;documentEvents.visibilitychange();assert.equal(frames.size,1);assert.equal(activeRace.phase,'paused');
 console.log('PASS real controller: start, pause, repeated restart, keyboard-driven full race, result DOM, saved rewards, workshop return, background pause and single RAF.');
 
+// Two independent pointers: steering continues while aim fires and releases.
+get('mode').value='combat';get('mode').onchange();get('start-button').onclick();
+for(let i=0;i<185;i++)step();assert.equal(activeRace.phase,'racing');
+for(const id of ['move-stick','aim-stick'])get(id).getBoundingClientRect=()=>({left:0,top:0,width:120,height:120});
+get('move-stick').dispatch('pointerdown',{pointerId:1,clientX:90,clientY:60});
+get('aim-stick').dispatch('pointerdown',{pointerId:2,clientX:60,clientY:100});
+const ammo=activeRace.actors[0].gun.ammo;step();step();assert.ok(activeRace.actors[0].gun.ammo<ammo,'Aim stick fires');
+assert.ok(Math.abs(activeRace.actors[0].gun.aim-Math.PI/2)<.01,'Aim is independent of movement');
+get('aim-stick').dispatch('pointercancel',{pointerId:2});
+assert.ok(get('move-stick').classList.contains('engaged'),'Cancel aim leaves movement active');
+get('pause-button').onclick();assert.equal(get('move-stick').classList.contains('engaged'),false,'Pause releases all pointers');
+get('resume-button').onclick();assert.equal(get('aim-stick').classList.contains('engaged'),false);
+get('move-stick').dispatch('pointerdown',{pointerId:3,clientX:100,clientY:60});windowEvents.resize();assert.equal(get('move-stick').classList.contains('engaged'),false,'Rotation/resize clears stale joystick coordinates');
+console.log('PASS dual touch: independent movement/aim, shooting, pointer cancellation, pause and resize cleanup.');
+
 // Storage denial must never prevent startup or racing.
 frames.clear();
 const blocked={...sandbox,localStorage:{getItem(){throw Error('denied')},setItem(){throw Error('denied')}}};

@@ -1366,3 +1366,31 @@
   .hub-tabs button {min-width:0;gap:8px;padding:12px 4px;}
   .hub-tabs button>span:last-child {min-width:0;line-height:1.35;text-align:left;}
 }
+
+/* Thumb controls share the viewport with the race, never a separate D-pad row. */
+.touch-controls {display:none!important;}
+.mobile-racing,.mobile-racing body {overflow:hidden;overscroll-behavior:none;}
+.mobile-racing #race-screen {position:fixed;inset:0;z-index:50;width:100%;height:100dvh;margin:0;padding:0;background:#243e38;isolation:isolate;}
+.mobile-racing .playfield {position:absolute;inset:0;border:0;background:#243e38;display:flex;align-items:center;justify-content:center;}
+.mobile-racing .playfield>canvas {width:min(100vw,160dvh);height:auto;max-height:100dvh;flex:none;}
+.mobile-racing .race-topline,.mobile-racing .race-tip,.mobile-racing .lap-clock,.mobile-racing .hud-corn {display:none;}
+.mobile-racing .race-hud {position:absolute;z-index:2;top:env(safe-area-inset-top,0px);left:env(safe-area-inset-left,0px);right:env(safe-area-inset-right,0px);background:#17362bcc;border:0;padding:5px 12px;gap:14px;pointer-events:none;}
+.mobile-racing .race-hud button {pointer-events:auto;min-width:44px;min-height:44px;}
+.mobile-racing .race-hud strong {font-size:20px;color:#fff1c8;}.mobile-racing .race-hud small {font-size:9px;color:#e5dec6;}
+.mobile-racing .combat-hud {position:absolute;z-index:2;top:calc(62px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);max-width:95%;width:max-content;padding:3px 8px;font-size:10px;background:#17362bb3;border:0;text-align:center;pointer-events:none;}
+.mobile-racing .combat-hud span {display:none;}
+.mobile-racing .race-bottom {position:absolute;z-index:2;bottom:calc(10px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);width:120px;padding:0;background:transparent;border:0;pointer-events:none;}
+.mobile-racing .race-bottom .item-slot {display:none;}.mobile-racing .stamina {width:100%;}.mobile-racing .stamina kbd {display:none;}
+.mobile-racing .touch-controls {display:block!important;position:absolute;inset:0;z-index:3;pointer-events:none;touch-action:none;user-select:none;-webkit-user-select:none;}
+.touch-stick {position:absolute;bottom:calc(24px + env(safe-area-inset-bottom,0px));width:clamp(110px,23vmin,150px);aspect-ratio:1;border-radius:50%;border:2px solid #f5e9c777;background:#183b344d;pointer-events:auto;touch-action:none;opacity:.65;}
+.move-stick {left:calc(18px + env(safe-area-inset-left,0px));}.aim-stick {right:calc(18px + env(safe-area-inset-right,0px));border-color:#edb78099;}
+.touch-stick.engaged {opacity:.95;background:#183b3480;}
+.stick-knob {position:absolute;left:50%;top:50%;width:42%;height:42%;border:2px solid #fff0c8aa;border-radius:50%;background:#e8dfbb55;transform:translate(-50%,-50%);pointer-events:none;}
+.touch-stick small {position:absolute;top:calc(100% + 5px);left:50%;transform:translateX(-50%);white-space:nowrap;font:700 9px monospace;color:#fff2cd;pointer-events:none;}
+.touch-actions {position:absolute;bottom:calc(65px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);display:flex;gap:6px;}
+.touch-controls .touch-actions button {pointer-events:auto;touch-action:none;min-width:46px;width:auto;height:44px;padding:6px;font:700 10px monospace;background:#25493bcc;color:#fff2cd;border:1px solid #e3d3a588;border-radius:12px;}
+.mobile-racing .race-toast {bottom:46%;max-width:65%;font-size:11px;}
+@media(orientation:portrait){.mobile-racing .combat-hud {top:calc(66px + env(safe-area-inset-top,0px));}.mobile-racing .playfield>canvas {width:100vw;}}
+.mobile-racing #race-screen {max-width:none;max-height:none;}
+.mobile-racing .touch-controls {background:transparent;border:0;padding:0;}
+@media(orientation:portrait){.mobile-racing .touch-actions{bottom:calc(165px + env(safe-area-inset-bottom,0px));}}

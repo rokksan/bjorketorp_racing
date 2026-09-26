@@ -730,7 +730,7 @@
         if(!sliding){if(a.driftCharge>.18&&alignment>.94&&!offroad&&len>0&&a.slow===0){a.cornerBoost=.45;notify(r,'boost','Snygg sväng! Gratis skjuts från svågern.');a.driftCharge=0;}else if(offroad||!len||a.slow>0)a.driftCharge=0;else a.driftCharge=Math.max(0,a.driftCharge-dt*.3);}
       }
       const factor=a.slow>0?.48:a.boost>0?(isPlayer?2.05:1.5):sprint?1.32:a.cornerBoost>0?1.12:a.draft>.5?1.09:1;
-      const desired=base*factor*(r.combat&&a.gun.rearFire>0?.85:1)*(offroad?(isPlayer?.53+r.up.boots*.065:.6):1)*(len>0?1:0);
+      const desired=base*factor*(isPlayer&&input.analog?Math.min(1,len):1)*(r.combat&&a.gun.rearFire>0?.85:1)*(offroad?(isPlayer?.53+r.up.boots*.065:.6):1)*(len>0?1:0);
       const grip=isPlayer?(r.character.grip+r.up.boots*1.8)*r.build.grip*(a.boost>0?.42:1):8,blend=1-Math.exp(-grip*dt);
       a.vx+=(dx*desired-a.vx)*blend;
       a.vy+=(dy*desired-a.vy)*blend;
