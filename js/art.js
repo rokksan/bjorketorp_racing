@@ -196,10 +196,17 @@
     rect(ctx,x-2,y+2,4,2,type==='boost'?'#ad773e':type==='shield'?'#517b93':'#855d50');
   }
   function corn(ctx,x,y) {
-    rect(ctx,x-2,y-3,4,6,P.ochre);
-    rect(ctx,x-1,y-4,3,7,P.gold);
-    rect(ctx,x,y-3,1,5,P.cream);
-    rect(ctx,x-3,y+1,2,3,P.leaf);
+    // Dark silhouette and a pale halo stay legible on dirt, grass and night tracks.
+    rect(ctx,x-7,y-5,14,10,'#fff1af55');
+    rect(ctx,x-5,y-7,10,14,'#fff1af55');
+    rect(ctx,x-5,y-4,10,9,'#493921');
+    rect(ctx,x-3,y-6,6,13,'#493921');
+    rect(ctx,x-4,y-3,8,7,'#e6a52f');
+    rect(ctx,x-2,y-5,4,11,'#ffd65a');
+    rect(ctx,x-3,y-3,2,6,'#fff3ba');
+    rect(ctx,x+1,y-2,2,5,'#bc7925');
+    rect(ctx,x+7,y-8,1,5,'#fff6ce');
+    rect(ctx,x+5,y-6,5,1,'#fff6ce');
   }
   function fence(ctx,x,y,w) {
     rect(ctx,x,y+3,w,2,P.brown);

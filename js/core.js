@@ -788,7 +788,7 @@
       }
       if(isPlayer) {
         // One harvest per lap: parking on a pickup cannot farm infinite rewards.
-        for(const c of r.cornPoints)if(c.collectedLap<a.lap&&Math.hypot(a.x-c.x,a.y-c.y)<8) {
+        for(const c of r.cornPoints)if(c.collectedLap<a.lap&&Math.hypot(a.x-c.x,a.y-c.y)<13) {
           c.collectedLap=a.lap;
           r.corn++;
           r.events.push('coin');
