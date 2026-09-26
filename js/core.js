@@ -281,30 +281,30 @@
   }
   const FARMER_NAMES=['Raggar-Rune','Bulten','Sur-Sören','Dunk-Doris','Lad-Lasse','Stövel-Stina','Burk-Bosse','Gurra'];
   function makeCrowd(track) {
-    const people=[];
+    const people=[],wide=track.worldWidth||480,high=track.worldHeight||300,target=track.combat?24:6;
     for(let y=95;y<265&&people.length===0;y+=10)for(let x=110;x<370&&people.length===0;x+=10) {
       if(!rectangleClear(track,x-14,y-33,54,43,0))continue;
       for(let i=0;i<2;i++)people.push({x:x+i*22,y,id:i,name:FARMER_NAMES[i],mood:'heckle',moodTime:0,partner:1-i,color:i?'#486b59':'#a84b3e',windup:0});
     }
-    for(let i=0;i<30&&people.length<6;i++) {
+    for(let i=0;i<(track.combat?48:30)&&people.length<target;i++) {
       for(const side of [1,-1]) {
-        const p=pointAt(track,track.length*(.025+i*.032),side*(track.width+23));
-        if(p.x<12||p.x>468||p.y<32||p.y>290||!rectangleClear(track,p.x-14,p.y-33,32,43,0)||people.some(o=>Math.hypot(o.x-p.x,o.y-p.y)<35))continue;
+        const p=pointAt(track,track.length*(.025+i*(track.combat?1/24:.032)),side*(track.width+23));
+        if(p.x<12||p.x>wide-12||p.y<32||p.y>high-10||!rectangleClear(track,p.x-14,p.y-33,32,43,0)||people.some(o=>Math.hypot(o.x-p.x,o.y-p.y)<35))continue;
         people.push({...p,id:people.length,name:FARMER_NAMES[people.length%FARMER_NAMES.length],mood:'heckle',moodTime:0,color:['#a84b3e','#486b59','#b38b43','#73506e'][i%4],windup:0});
         break;
       }
     }
-    for(let y=38;y<280&&people.length<6;y+=24)for(let x=22;x<460&&people.length<6;x+=24) {
+    for(let y=38;y<high-20&&people.length<target;y+=24)for(let x=22;x<wide-20&&people.length<target;x+=24) {
       if(project(track,x,y).distance>90||!rectangleClear(track,x-14,y-33,32,43,0)||people.some(p=>Math.hypot(p.x-x,p.y-y)<35))continue;
       people.push({x,y,id:people.length,name:FARMER_NAMES[people.length%FARMER_NAMES.length],mood:'heckle',moodTime:0,color:['#a84b3e','#486b59','#b38b43'][people.length%3],windup:0});
     }
     // Paired hecklers get a dedicated clearing for their arguments and scuffles.
     let pairs=people.some(p=>p.partner!==undefined)?1:0;
     for(const host of people.slice()) {
-      if(pairs>=2)break;
+      if(pairs>=(track.combat?8:2))break;
       if(host.partner!==undefined)continue;
       const x=host.x+22,y=host.y;
-      if(x<465&&rectangleClear(track,host.x-14,y-33,54,43,0)&&!people.some(p=>Math.hypot(p.x-x,p.y-y)<19)) {
+      if(x<wide-15&&rectangleClear(track,host.x-14,y-33,54,43,0)&&!people.some(p=>Math.hypot(p.x-x,p.y-y)<19)) {
         const mate={...host,x,id:people.length,name:FARMER_NAMES[people.length%FARMER_NAMES.length],color:'#846b99',partner:host.id};
         host.partner=mate.id;people.push(mate);pairs++;
       }

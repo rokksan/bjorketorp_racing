@@ -400,7 +400,7 @@
           };
           C.tick(race,input,1/120);
           if(race.combat){
-            const p=race.actors[0],cam=race.camera,targetZoom=race.countdown>0?.5:1.2,k=1-Math.exp(-5/120);
+            const p=race.actors[0],cam=race.camera,targetZoom=race.countdown>0?.5:1.05,k=1-Math.exp(-5/120);
             cam.zoom+=(targetZoom-cam.zoom)*k;
             const tx=C.clamp(p.x+p.vx*.65-240/cam.zoom,0,race.track.worldWidth-480/cam.zoom),ty=C.clamp(p.y+p.vy*.65-150/cam.zoom,0,race.track.worldHeight-300/cam.zoom);
             cam.x+=(tx-cam.x)*k;cam.y+=(ty-cam.y)*k;

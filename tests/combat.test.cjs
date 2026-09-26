@@ -66,3 +66,10 @@ console.log('PASS potato impacts brake and cannot propel racers forward around t
  const corrupt=C.sanitizeSave({weaponUpgrades:{potato:{reload:99,recoil:-1}},selected:{weapon:'bogus',combatTrack:'bogus'}});assert.equal(corrupt.weaponUpgrades.potato.reload,3);assert.equal(corrupt.weaponUpgrades.potato.recoil,0);assert.equal(corrupt.selected.weapon,'shotgun');
 }
 console.log('PASS weapon purchases, insufficient funds, caps, migration and reload effect.');
+for(const def of C.COMBAT_TRACKS){
+ const track=C.buildTrack(def),crowd=C.makeCrowd(track);
+ assert.ok(crowd.length>=24,'Larger circuits need a full crowd');
+ assert.ok(crowd.filter(p=>p.x>480).length>=8,'Populate the right half of the world');
+ assert.ok(crowd.filter(p=>p.y>300).length>=8,'Populate the lower half of the world');
+ for(const p of crowd){assert.ok(C.rectangleClear(track,p.x-14,p.y-33,32,43,0),'Farmers stay off the road');if(p.partner!==undefined)assert.equal(crowd[p.partner].partner,p.id);}
+}

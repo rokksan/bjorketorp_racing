@@ -367,9 +367,11 @@
     }
     for(let d=25;d<track.length;d+=65){const p=C.pointAt(track,d);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle);rect(ctx,-4,-1,8,2,'#f7e7b8');ctx.restore();}
     const scene=[];
-    for(let i=0;i<200;i++){
+    const spectators=C.makeCrowd(track);
+    for(let i=0;i<150;i++){
       const x=20+rand()*880,y=20+rand()*520;if(!C.rectangleClear(track,x,y,40,40,8))continue;
-      const type=i%4===0?'caravan':i%4===1?'volvo740':i%4===2?'bottles':'tree';
+      if(spectators.some(p=>p.x>x-20&&p.x<x+60&&p.y>y-15&&p.y<y+80))continue;
+      const type=i%12===0?'caravan':i%12===1?'volvo740':i%4===2?'bottles':'tree';
       if(type==='tree')tree(ctx,x,y);else prop(ctx,type,x,y);scene.push({type,x,y,w:40,h:40});
     }
     const start=C.pointAt(track,0);ctx.save();ctx.translate(start.x,start.y);ctx.rotate(start.angle);
