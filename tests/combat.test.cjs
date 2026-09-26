@@ -1,0 +1,68 @@
+const assert=require('node:assert/strict'),C=require('../js/core.js');
+const make=()=>{const r=C.makeRace({mode:'combat',chicken:'greta',difficulty:'normal',track:'market'},C.freshSave());r.countdown=0;r.phase='racing';return r;};
+{
+ const r=make(),p=r.actors[0];assert.equal(r.track.worldWidth,960);assert.equal(r.track.width,39);
+ p.gun.aim=0;assert.ok(C.fireShot(r,p));assert.equal(p.gun.ammo,1);assert.ok(p.hitPushX<0);assert.equal(C.fireShot(r,p),false);
+ p.gun.cooldown=0;C.fireShot(r,p);assert.equal(p.gun.ammo,0);assert.ok(p.gun.reload>2);
+ r.actors=r.actors.slice(0,1);for(let i=0;i<280;i++)C.updateCombat(r,{},1/120);assert.equal(p.gun.ammo,2);assert.equal(r.bullets.length,0);
+}
+{
+ const r=make();r.cover=[];r.actors=r.actors.slice(0,2);const [p,b]=r.actors;Object.assign(p,{x:100,y:100});Object.assign(b,{x:140,y:100});p.gun.aim=0;C.fireShot(r,p);
+ for(let i=0;i<20;i++)C.updateCombat(r,{},1/120);assert.ok(b.invulnerable>0);assert.ok(b.hitPushX>0);assert.ok(b.hitPushX<130,'One shotgun blast must not stack five knockbacks');
+ const frozen=JSON.stringify(r.bullets);r.phase='paused';C.tick(r,{fire:true},1);assert.equal(JSON.stringify(r.bullets),frozen);
+}
+{
+ const r=make();r.actors=r.actors.slice(0,2);const [p,b]=r.actors;Object.assign(p,{x:100,y:100});Object.assign(b,{x:170,y:100});r.cover=[{x:138,y:100,radius:12}];p.gun.aim=0;C.fireShot(r,p);for(let i=0;i<60;i++)C.updateCombat(r,{},1/120);assert.equal(b.invulnerable,0,'Cover blocks pellets');
+}
+{
+ const r=make();let steps=0;
+ while(r.phase!=='finished'&&steps++<240*120){const p=r.actors[0],target=C.pointAt(r.track,p.along+20,-23);C.tick(r,{x:target.x-p.x,y:target.y-p.y,sprint:p.stamina>.5,aimX:target.x,aimY:target.y,fire:true},1/120);}
+ assert.equal(r.phase,'finished','Combat race must remain finishable');assert.equal(r.actors[0].laps.length,2);
+ const save=C.freshSave(),before=JSON.stringify(save);C.settleRace(save,r);assert.equal(save.coins,0);assert.equal(save.races,0);assert.equal(save.combatMastery.shotgun,1);assert.equal(C.settleRace(save,r),null,'Rewards only once');console.log('Combat finish time:',r.time.toFixed(1));
+}
+console.log('PASS combat: firing, recoil, reload, hit immunity, cover, pause, two-lap completion and economy isolation.');
+
+for(const weapon of Object.keys(C.WEAPONS)){
+ const r=C.makeRace({mode:'combat',chicken:'greta',difficulty:'normal',track:'market',weapon},C.freshSave());const p=r.actors[0],w=C.WEAPONS[weapon];
+ assert.equal(p.gun.ammo,w.ammo);C.fireShot(r,p);assert.equal(r.bullets.length,w.pellets);assert.ok(r.events.some(e=>e.name===weapon));
+ p.gun.cooldown=0;C.updateCombat(r,{reload:true},1/120);assert.ok(r.events.some(e=>e.name==='reload-start'));assert.ok(Math.abs(p.gun.reload-w.reload)<.01);
+}
+{
+ const r=make();r.cover=[];r.actors=r.actors.slice(0,2);const [p,b]=r.actors;Object.assign(p,{x:100,y:100});Object.assign(b,{x:140,y:100});p.gun.aim=0;C.fireShot(r,p);
+ for(let i=0;i<20;i++)C.updateCombat(r,{},1/120);assert.equal(r.events.filter(e=>e.name==='cluck').length,1,'One hurt call per blast');
+}
+for(const track of C.COMBAT_TRACKS){
+ const save=C.freshSave(),r=C.makeRace({mode:'combat',chicken:'greta',difficulty:'easy',combatTrack:track.id,weapon:'potato'},save);r.countdown=0;r.phase='racing';let steps=0;
+ while(r.phase!=='finished'&&steps++<240*120){const p=r.actors[0],target=C.pointAt(r.track,p.along+22,-20);C.tick(r,{x:target.x-p.x,y:target.y-p.y,aimX:target.x,aimY:target.y,fire:true},1/120);}
+ assert.equal(r.phase,'finished',track.id+' is finishable with potato cannon');C.settleRace(save,r);assert.equal(C.sanitizeSave(JSON.parse(JSON.stringify(save))).combatMastery.potato,1);
+}
+{
+ const r=make();r.actors=r.actors.slice(0,2);r.cover=[];const [p,b]=r.actors;Object.assign(p,{x:100,y:100});Object.assign(b,{x:160,y:100});p.gun.weapon='potato';p.gun.ammo=1;p.gun.aim=0;C.fireShot(r,p);
+ for(let i=0;i<60;i++)C.updateCombat(r,{},1/120);
+ assert.ok(r.puddles.length>0);assert.equal(r.puddles[0].radius,19);assert.ok(b.slow>0);assert.ok(r.events.includes('potato-hit'));
+}
+console.log('PASS all combat courses, potato area impact and mastery persistence.');
+// Potato impacts from any direction brake racers, including existing forward impulses.
+for(const fraction of [.05,.3,.65,.9])for(const side of [-1,0,1]){
+ const r=make();r.cover=[];r.actors=r.actors.slice(0,1);const a=r.actors[0],pos=C.pointAt(r.track,r.track.length*fraction);
+ const fx=Math.cos(pos.angle),fy=Math.sin(pos.angle),nx=-fy,ny=fx;
+ Object.assign(a,{x:pos.x,y:pos.y,vx:fx*80,vy:fy*80,hitPushX:fx*90,hitPushY:fy*90,boost:2,cornerBoost:.4,driftCharge:.5});
+ r.bullets=[{x:a.x-fx*15+nx*side*15,y:a.y-fy*15+ny*side*15,vx:0,vy:0,life:0,weapon:'potato',owner:9}];
+ C.updateCombat(r,{},1/120);
+ assert.ok(a.hitPushX*fx+a.hitPushY*fy<0,'No forward potato impulse');
+ assert.ok(a.vx*fx+a.vy*fy<30,'Immediate braking, not just a future slow');
+ assert.equal(a.boost,0);assert.equal(a.cornerBoost,0);assert.ok(a.slow>=1.2);
+}
+console.log('PASS potato impacts brake and cannot propel racers forward around the course.');
+{
+ const save=C.freshSave();save.coins=1000;
+ assert.equal(C.buyWeaponUpgrade(save,'potato','reload'),true);assert.equal(save.coins,880);
+ assert.equal(C.buyWeaponUpgrade(save,'rifle','recoil'),true);assert.equal(save.coins,780);
+ assert.equal(C.buyWeaponUpgrade(save,'unknown','recoil'),false);
+ const restored=C.sanitizeSave(JSON.parse(JSON.stringify(save)));assert.equal(restored.weaponUpgrades.potato.reload,1);assert.equal(restored.weaponUpgrades.rifle.recoil,1);
+ const r=C.makeRace({mode:'combat',weapon:'potato'},restored);C.fireShot(r,r.actors[0]);assert.ok(Math.abs(r.actors[0].gun.reload-3.3*.95)<1e-9);
+ save.coins=0;assert.equal(C.buyWeaponUpgrade(save,'potato','reload'),false);assert.equal(save.weaponUpgrades.potato.reload,1);
+ save.coins=10000;C.buyWeaponUpgrade(save,'potato','reload');C.buyWeaponUpgrade(save,'potato','reload');const coins=save.coins;assert.equal(C.buyWeaponUpgrade(save,'potato','reload'),false);assert.equal(save.coins,coins);
+ const corrupt=C.sanitizeSave({weaponUpgrades:{potato:{reload:99,recoil:-1}},selected:{weapon:'bogus',combatTrack:'bogus'}});assert.equal(corrupt.weaponUpgrades.potato.reload,3);assert.equal(corrupt.weaponUpgrades.potato.recoil,0);assert.equal(corrupt.selected.weapon,'shotgun');
+}
+console.log('PASS weapon purchases, insufficient funds, caps, migration and reload effect.');

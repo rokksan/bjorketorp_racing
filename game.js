@@ -21,6 +21,7 @@
     }
   }
   let save=loadSave(),screen='hub',race=null,background=null,frameId=null,lastTime=0,accumulator=0,pausedPhase=null,queuedItem=false,view='race',lastFarmDraw=0,lastHud=0,toastTimer=null;
+  const mouse={x:240,y:150,active:false,down:false,queued:false,reloadQueued:false};
   const keys=new Set(),reducedMotion=matchMedia('(prefers-reduced-motion: reduce)'),audio=new FarmAudio.AudioEngine(save.settings),backgrounds=new Map();
   const selected=save.selected;
   function persist() {
@@ -64,17 +65,18 @@
     const season=C.TRACKS.findIndex(t=>t.id===selected.track);
     setText('season-label',`${['MARKNAD','REGN ÖVER ÅKERN','SKÖRDEFEST I NATT'][season]} I BJÖRKETORP`);
     $('track-cards').replaceChildren();
-    for(const [index,t] of C.TRACKS.entries()) {
+    const combat=selected.mode==='combat',chosen=combat?selected.combatTrack:selected.track;
+    for(const [index,t] of (combat?C.COMBAT_TRACKS:C.TRACKS).entries()) {
       const locked=save.races<t.unlock,button=document.createElement('button');
       button.type='button';
-      button.className='track-card'+(selected.track===t.id?' selected':'');
+      button.className='track-card'+(chosen===t.id?' selected':'');
       button.disabled=locked;
-      button.setAttribute('aria-pressed',String(selected.track===t.id));
+      button.setAttribute('aria-pressed',String(chosen===t.id));
       button.setAttribute('aria-label',`${t.name}${locked?`, låses upp efter ${t.unlock} lopp`:''}`);
       const record=save.records[`${t.id}:${selected.mode}:${selected.difficulty}`],medal=save.medals[`${t.id}:${selected.difficulty}`]||0;
-      button.innerHTML=`<canvas class="track-map" width="240" height="116" aria-hidden="true"></canvas>${locked?`<span class="locked-mark">${save.races} / ${t.unlock} LOPP</span>`:selected.track===t.id?'<span class="selection-mark">VALD BANA</span>':''}<span class="track-body"><b>${t.short}</b><span class="track-sub">${t.subtitle}</span><span class="track-meta"><span>${locked?'LÅST':`${['MARKNAD','REGN ÖVER ÅKERN','SKÖRDEFEST I NATT'][index]} · ${['LÄTT','MEDEL','TEKNISK'][index]}`}</span><span>${record?C.formatTime(record.time):medal?['','BRONS','SILVER','GULD'][medal]:'—'}</span></span></span>`;
+      button.innerHTML=`<canvas class="track-map" width="240" height="116" aria-hidden="true"></canvas>${locked?`<span class="locked-mark">${save.races} / ${t.unlock} LOPP</span>`:chosen===t.id?'<span class="selection-mark">VALD BANA</span>':''}<span class="track-body"><b>${t.short}</b><span class="track-sub">${combat?['Skrotbarrikader & blandade skottlinjer','Trånga lerkrökar · passa dig för moset','Långa rakor · håll koll på studsarna'][index]:t.subtitle}</span><span class="track-meta"><span>${locked?'LÅST':`${combat?['SKROT','TORVTRÄSK','FLYGFÄLT'][index]:['MARKNAD','REGN ÖVER ÅKERN','SKÖRDEFEST I NATT'][index]} · ${combat?'2 VARV':['LÄTT','MEDEL','TEKNISK'][index]}`}</span><span>${record?C.formatTime(record.time):medal?['','BRONS','SILVER','GULD'][medal]:'—'}</span></span></span>`;
       button.addEventListener('click',()=> {
-        selected.track=t.id;
+        if(combat)selected.combatTrack=t.id;else selected.track=t.id;
         audio.play('click');
         persist();
         renderTracks();
@@ -84,7 +86,7 @@
       const ctx=button.querySelector('canvas').getContext('2d');
       ctx.imageSmoothingEnabled=false;
       const track=C.buildTrack(t);
-      ctx.drawImage(getBackground(track).canvas,0,0,480,300,0,-15,240,150);
+      ctx.drawImage(getBackground(track).canvas,0,0,track.worldWidth||480,track.worldHeight||300,0,-15,240,150);
     }
   }
   function renderChickens() {
@@ -107,6 +109,23 @@
       A.drawPortrait(button.querySelector('canvas'),c.color,save.skin,save.outfit);
     }
     setText('chicken-perk',trial?'Svets-Greta utan uppgraderingar · samma villkor för varje rekord':C.CHARACTERS[selected.chicken].tag+' '+C.CHARACTERS[selected.chicken].perk);
+  }
+  function renderArmory(){
+    $('weapon-cards').replaceChildren();
+    const copy={shotgun:'Bred knuff på nära håll. Två patroner, sedan får du stå för fiolerna.',pistol:'Lätt att bära. Snabba skott tömmer rivalens spurt, men knuffar svagt.',rifle:'Långa skott bryter boost. Tung att bära och sparkar som en obesiktigad älg.',potato:'Långsam potatis, stor mosfläck. Bromsar alla i närheten — även leverantören.'};
+    for(const [key,w] of Object.entries(C.WEAPONS)){
+      const card=document.createElement('article'),active=(selected.weapon||'shotgun')===key,up=save.weaponUpgrades?.[key]||{},runs=save.combatMastery?.[key]||0,mastery=Math.min(3,Math.floor(runs/3));
+      card.className='catalog-product weapon-product'+(active?' equipped':'');
+      card.innerHTML=`<span class="catalog-edition">ART. 049-${Object.keys(C.WEAPONS).indexOf(key)+1} / LAGÅRDSKLASS</span><canvas width="160" height="70" aria-hidden="true"></canvas><h3>${w.name}</h3><p>${copy[key]}</p><dl class="weapon-spec"><div><dt>Magasin</dt><dd>${w.ammo} skott</dd></div><div><dt>Omladdning</dt><dd>${(w.reload*(1-mastery*.06-(up.reload||0)*.05)).toFixed(2)} s</dd></div><div><dt>Egen rekyl</dt><dd>${Math.round(w.recoil*(1-(up.recoil||0)*.12))}</dd></div></dl><button class="secondary weapon-equip" aria-pressed="${active}">${active?'✓ Packad till loppet':'Välj vapen · gratis'}</button><p class="weapon-mastery">MÄSTERSKAP ${mastery}/3 · ${runs} målgångar<br><small>${mastery===3?'Fullärd byfåne. −18 % omladdning.':`${3-runs%3} lopp till nästa nivå · −6 % omladdning/nivå`}</small></p><div class="weapon-tuning"></div>`;
+      card.querySelector('.weapon-equip').onclick=()=>{selected.weapon=key;persist();modeCopy();renderArmory();audio.play('click');};
+      for(const [type,u] of Object.entries(C.WEAPON_UPGRADES)){
+        const level=up[type]||0,cost=u.cost[level],row=document.createElement('div');row.className='weapon-upgrade';
+        row.innerHTML=`<b>${u.name}</b><small>${u.description} Nivå ${level}/3.</small><button class="secondary" ${level===3||save.coins<cost?'disabled':''}>${level===3?'Färdigfultrimmad':`Uppgradera · ${cost} mynt`}</button>`;
+        row.querySelector('button').onclick=()=>{if(C.buyWeaponUpgrade(save,key,type)){persist();renderWallet();renderArmory();audio.play('buy');toast(u.name+' monterad på '+w.name);}};
+        card.querySelector('.weapon-tuning').append(row);
+      }
+      $('weapon-cards').append(card);A.drawWeapon?.(card.querySelector('canvas'),key);
+    }
   }
   function renderWorkshop() {
     $('upgrade-cards').replaceChildren();
@@ -200,7 +219,8 @@
   }
   function setView(next) {
     view=next;
-    for(const key of ['race','workshop','catalog','journal'])$(key+'-view').classList.toggle('hidden',key!==next);
+    if(next==='armory')renderArmory();
+    for(const key of ['race','workshop','catalog','armory','journal'])$(key+'-view').classList.toggle('hidden',key!==next);
     document.querySelectorAll('[data-view]').forEach(button=> {
       button.classList.toggle('active',button.dataset.view===next);
       button.setAttribute('aria-pressed',String(button.dataset.view===next));
@@ -208,7 +228,7 @@
   }
   function showHub(next='race') {
     screen='hub';
-    keys.clear();
+    keys.clear();mouse.down=false;
     queuedItem=false;
     race=null;
     pausedPhase=null;
@@ -228,25 +248,29 @@
   }
   function startRace() {
     const t=C.TRACKS.find(t=>t.id===selected.track);
-    if(!t||t.unlock>save.races)return;
+    if(!t||selected.mode!=='combat'&&t.unlock>save.races)return;
     audio.unlock();
     audio.pause(false);
-    audio.setTheme(t.music);
+    audio.setTheme(selected.mode==='combat'?(C.COMBAT_TRACKS.find(t=>t.id===selected.combatTrack)?.music||'market'):t.music);
     keys.clear();
     queuedItem=false;
     pausedPhase=null;
     document.querySelectorAll('dialog[open]').forEach(d=>d.close());
-    race=C.makeRace(selected,save);
+    race=C.makeRace({...selected,weapon:selected.weapon,combatTrack:selected.combatTrack},save);
     race.skin=save.skin;
     race.outfit=save.outfit;
+    mouse.down=false;mouse.queued=false;mouse.reloadQueued=false;mouse.active=false;
+    if(race.combat)race.camera={x:0,y:0,zoom:.5};
+    $('combat-hud').classList.toggle('hidden',!race.combat);
+    $('game').classList.toggle('combat-cursor',race.combat);
     background=getBackground(race.track);
     screen='race';
     $('hub').classList.add('hidden');
     $('results').classList.add('hidden');
     $('race-screen').classList.remove('hidden');
     setText('race-track-name',race.track.name);
-    setText('race-tip',selected.mode==='trial'?'Jaga din bästa tid. Spökhönan följer ditt personbästa och kan inte krocka med dig.':race.feedback);
-    setText('race-mode-label',selected.mode==='trial'?(race.ghost?'TIDSTRÄNING · SPÖKHÖNA AKTIV':'TIDSTRÄNING · STANDARDHÖNA'): {
+    setText('race-tip',race.combat?'WASD: spring · mus: sikta · klick: skjut · R: ladda · Shift: spurt · Space: föremål':selected.mode==='trial'?'Jaga din bästa tid. Spökhönan följer ditt personbästa och kan inte krocka med dig.':race.feedback);
+    setText('race-mode-label',race.combat?'SKROTKRIG · 2 VARV · TESTBANA':selected.mode==='trial'?(race.ghost?'TIDSTRÄNING · SPÖKHÖNA AKTIV':'TIDSTRÄNING · STANDARDHÖNA'): {
       easy:'SÖNDAGSBAKFYLLA',normal:'PANTPANIK',hard:'FOGDEN KOMMER'
     }
     [selected.difficulty]);
@@ -280,7 +304,7 @@
     setText('result-copy',`${race.track.name} · ${trial?'Tidsträning':`${result.position}:a av 5 hönor`} ${result.newRecord?'· Nytt banrekord!':''}${trial?'':` · ${C.RIVALS[0].name}: ${save.rivalWins[0]>0?'Nästa gång tar jag fan traktorn.':C.RIVALS[0].quip}`}`);
     A.drawPortrait($('result-bird'),p.color,save.skin,save.outfit);
     $('result-stats').innerHTML=`<div><span>LOPPTID</span><strong>${C.formatTime(result.time)}</strong></div><div><span>BÄSTA VARV</span><strong>${C.formatTime(result.bestLap)}</strong></div><div><span>MAJSKORN</span><strong>${result.corn}</strong></div>`;
-    $('result-rewards').innerHTML=trial?`Träning ger färdighet.<small>${result.newRecord&&save.ghosts[race.track.id]?'Din nya spökhöna är sparad. Slå den nästa gång!':'Ditt bästa lopp blir en spökhöna att jaga.'} Inga gårdsmynt delas ut.</small>`:`+${result.coins} gårdsmynt<small>Placering + ${result.corn*6} för majs ${result.clean?'+ 10 för ett rent lopp':''} · ${save.coins} mynt i kassan</small>`;
+    $('result-rewards').innerHTML=race.combat?`Vapenmästerskap +1<small>${C.WEAPONS[race.actors[0].gun.weapon].name}: ${result.mastery} lopp · nivå ${Math.min(3,Math.floor(result.mastery/3))}/3. Var tredje målgång ger 6 % snabbare omladdning.</small>`:trial?`Träning ger färdighet.<small>${result.newRecord&&save.ghosts[race.track.id]?'Din nya spökhöna är sparad. Slå den nästa gång!':'Ditt bästa lopp blir en spökhöna att jaga.'} Inga gårdsmynt delas ut.</small>`:`+${result.coins} gårdsmynt<small>Placering + ${result.corn*6} för majs ${result.clean?'+ 10 för ett rent lopp':''} · ${save.coins} mynt i kassan</small>`;
     const unlocked=C.TRACKS.filter(t=>oldRaces<t.unlock&&save.races>=t.unlock).map(t=>`${t.name} är nu öppen!`);
     if(result.cupMessage)unlocked.push(result.cupMessage);
     if(oldRaces<3&&save.races>=3)unlocked.push('Kommunens avlagda disktrasa upplåst i hönshuset!');
@@ -308,12 +332,13 @@
   function updateHud() {
     if(!race)return;
     const p=race.actors[0],position=C.ranking(race).findIndex(a=>a.id===0)+1;
-    const pos=`${position}<em>/${race.actors.length}</em>`,lap=`${Math.min(3,p.lap+1)}<em>/3</em>`;
+    const pos=`${position}<em>/${race.actors.length}</em>`,lap=`${Math.min(race.combat?2:3,p.lap+1)}<em>/${race.combat?2:3}</em>`;
     if($('hud-position').innerHTML!==pos)$('hud-position').innerHTML=pos;
     if($('hud-lap').innerHTML!==lap)$('hud-lap').innerHTML=lap;
     setText('stamina-label',p.stamina<.01?'VILA VINGARNA':'SPURT');
     setText('hud-time',C.formatTime(race.time));
     setText('hud-corn',race.corn);
+    if(race.combat){const w=C.WEAPONS[p.gun.weapon];setText('combat-status',p.gun.reload>0?`${w.name.toUpperCase()} · LADDAR ${p.gun.reload.toFixed(1)} s`:`${w.name.toUpperCase()} · M${p.gun.mastery} · ${p.gun.ammo}/${w.ammo} SKOTT · ${p.draft>.5?'SLIPSTREAM +9 %':'KLICK: SKJUT · R: LADDA'}`);}
     setText('lap-time',C.formatTime(race.time-p.lapStart));
     $('stamina-fill').style.width=`${p.stamina/race.maxStamina*100}%`;
     const item= {
@@ -332,6 +357,7 @@
   }
   function pauseRace(show=true) {
     if(screen!=='race'||!race||race.phase==='paused')return;
+    mouse.down=false;mouse.queued=false;mouse.reloadQueued=false;
     pausedPhase=race.phase;
     race.phase='paused';
     keys.clear();
@@ -370,10 +396,17 @@
         let steps=0;
         while(accumulator>=1/120&&steps++<12) {
           const input= {
-            x:Number(keys.has('ArrowRight')||keys.has('d'))-Number(keys.has('ArrowLeft')||keys.has('a')),y:Number(keys.has('ArrowDown')||keys.has('s'))-Number(keys.has('ArrowUp')||keys.has('w')),sprint:keys.has('Shift'),item:queuedItem
+            x:Number(keys.has('ArrowRight')||keys.has('d'))-Number(keys.has('ArrowLeft')||keys.has('a')),y:Number(keys.has('ArrowDown')||keys.has('s'))-Number(keys.has('ArrowUp')||keys.has('w')),sprint:keys.has('Shift'),item:queuedItem,fire:mouse.down||mouse.queued,reload:keys.has('r')||mouse.reloadQueued,aimX:race.combat&&mouse.active?race.camera.x+mouse.x/race.camera.zoom:undefined,aimY:race.combat&&mouse.active?race.camera.y+mouse.y/race.camera.zoom:undefined
           };
           C.tick(race,input,1/120);
-          queuedItem=false;
+          if(race.combat){
+            const p=race.actors[0],cam=race.camera,targetZoom=race.countdown>0?.5:1.2,k=1-Math.exp(-5/120);
+            cam.zoom+=(targetZoom-cam.zoom)*k;
+            const tx=C.clamp(p.x+p.vx*.65-240/cam.zoom,0,race.track.worldWidth-480/cam.zoom),ty=C.clamp(p.y+p.vy*.65-150/cam.zoom,0,race.track.worldHeight-300/cam.zoom);
+            cam.x+=(tx-cam.x)*k;cam.y+=(ty-cam.y)*k;
+            race.aim=mouse.active?{x:cam.x+mouse.x/cam.zoom,y:cam.y+mouse.y/cam.zoom}:null;
+          }
+          queuedItem=false;mouse.queued=false;mouse.reloadQueued=false;
           accumulator-=1/120;
           for(const event of race.events)audio.play(event);
           if(race.phase==='finished') {
@@ -409,8 +442,9 @@
       return;
     }
     if(race.phase==='paused'||document.querySelector('dialog[open]'))return;
-    if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d',' ','Shift'].includes(key)) {
+    if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d',' ','Shift','r'].includes(key)) {
       event.preventDefault();
+      if(key==='r'&&!event.repeat)mouse.reloadQueued=true;
       if(key===' ') {
         if(!event.repeat)queuedItem=true;
       }
@@ -450,6 +484,16 @@
     const release=()=>keys.delete(button.dataset.key);
     for(const event of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(event,release);
   });
+  const aimPointer=event=>{
+    const box=$('game').getBoundingClientRect();
+    mouse.x=(event.clientX-box.left)*480/box.width;mouse.y=(event.clientY-box.top)*300/box.height;mouse.active=true;
+  };
+  $('game').addEventListener('pointermove',aimPointer);
+  $('game').addEventListener('pointerdown',event=>{
+    if(!race?.combat||race.phase!=='racing'||event.button!==0)return;
+    event.preventDefault();aimPointer(event);mouse.down=true;mouse.queued=true;audio.unlock();$('game').setPointerCapture(event.pointerId);
+  });
+  for(const name of ['pointerup','pointercancel','lostpointercapture'])$('game').addEventListener(name,()=>mouse.down=false);
   for(const id of ['touch-item','item-button'])$(id).addEventListener('click',()=> {
     queuedItem=true;
     $('game').focus( {
@@ -494,7 +538,13 @@
     setText('start-copy',selected.mode==='trial'?'Hitta din linje, spara spurten och sätt ett nytt personbästa.':`Cup ${save.cup.stage+1}/3: pallplats på ${C.TRACKS[save.cup.stage].short}. Trimning: ${C.BUILDS[save.build].name}.`);
     setText('mode-copy',selected.mode==='trial'?'Jaga din egen spökhöna! Solo med standard-Greta. Ditt bästa lopp sparas som en spökhöna till nästa försök.':'Alla målgångar ger gårdsmynt. En pallplats ger medalj!');
     $('difficulty').disabled=selected.mode==='trial';
+    $('combat-loadout')?.classList.toggle('hidden',selected.mode!=='combat');
+    $('track-cards').classList.remove('hidden');
+    setText('weapon-summary',C.WEAPONS[selected.weapon||'shotgun'].name+' · välj & uppgradera');
+    if(selected.mode==='combat'){setText('session-summary','SKROTKRIGET · 2 VARV · MUSSIKTE');setText('start-copy','Tre stridsbanor. Fyra vapen. Rivalerna har egna vapen — välj ditt motdrag.');setText('mode-copy',`${save.combatMastery?.[selected.weapon]||0} målgångar med valt vapen. Vapenmästerskap: var tredje målgång med ett vapen ger 6 % snabbare omladdning, upp till nivå 3. Inga mynt eller cupsteg påverkas.`);}
   }
+  $('open-armory').onclick=()=>setView('armory');
+  $('armory-back').onclick=()=>{setView('race');renderTracks();modeCopy();};
   $('mode').onchange=()=> {
     selected.mode=$('mode').value;
     if(selected.mode==='trial') {

@@ -147,7 +147,7 @@ test('Cross 49 travels, warns, burns, leaves finite mud and respects pause/trial
   r.time=9;C.tick(r,{},.1);assert.equal(r.cross.state,'warning');assert.equal(r.puddles.length,0);
   r.time=11;C.tick(r,{},.1);assert.equal(r.cross.state,'burn');assert.equal(r.puddles.length>0,mode==='race');
   const frozen=JSON.stringify(r.cross);r.phase='paused';C.tick(r,{},1);assert.equal(JSON.stringify(r.cross),frozen);
-  r.phase='racing';r.time=14;for(let i=0;i<400;i++)C.tick(r,{},1/120);assert.equal(r.puddles.length,0);
+  r.phase='racing';r.time=14;for(let i=0;i<400;i++)C.tick(r,{},1/120);assert.ok(!r.puddles.some(p=>p.kind==='mud'));
  }
 });
 test('Burnout is a shieldable obstacle while its warning is harmless',()=>{
@@ -197,4 +197,24 @@ test('Sprint plays its ignition once per activation, not every simulation step',
 test('Space boost emits a dedicated sound and an unshielded obstacle cancels it',()=>{
  const r=C.makeRace({track:'market',chicken:'greta',mode:'race'},C.freshSave());r.phase='racing';r.countdown=0;r.crowd=[];const p=r.actors[0];p.item='boost';C.tick(r,{x:1,item:true},1/120);assert.ok(r.events.includes('eggboost'));assert.ok(p.boost>2.5);
  r.obstacles=[{x:p.x,y:p.y,radius:8,kind:'hay'}];p.cooldown=0;C.tick(r,{x:1},1/120);assert.equal(p.boost,0);assert.ok(p.slow>0);
+});
+
+test('Tractor tows a spreader, warns before spreading, pauses and stays out of trials',()=>{
+ const r=C.makeRace({track:'market',chicken:'greta',mode:'race'},C.freshSave());r.phase='racing';r.countdown=0;
+ r.tractor.along=r.track.length*.16;C.updateTractor(r,0);assert.equal(r.tractor.state,'warning');assert.equal(r.puddles.length,0);assert.ok(r.tractor.trailer);
+ r.tractor.along=r.track.length*.2;C.updateTractor(r,.1);assert.equal(r.puddles[0].kind,'manure');assert.equal(r.puddles[0].life,6);
+ const before=JSON.stringify(r.tractor);r.phase='paused';C.tick(r,{},1);assert.equal(JSON.stringify(r.tractor),before);
+ const trial=C.makeRace({track:'market',mode:'trial'},C.freshSave());const along=trial.tractor.along;C.updateTractor(trial,20);assert.equal(trial.tractor.along,along);assert.equal(trial.puddles.length,0);
+});
+
+test('Trailer keeps a rigid drawbar and articulates through bends independently of road sampling',()=>{
+ const r=C.makeRace({track:'meadow',mode:'race'},C.freshSave());let bent=false;
+ for(let i=0;i<6000;i++) {C.updateTractor(r,1/120);const t=r.tractor,tr=t.trailer;
+ assert.ok(Math.abs(Math.hypot(t.hitch.x-tr.x,t.hitch.y-tr.y)-22)<1e-8);
+ if(Math.abs(Math.sin(t.angle-tr.angle))>.3)bent=true;
+ }
+ assert.ok(bent,'Trailer must lag behind tractor heading in bends');
+ const a=C.makeRace({track:'market',mode:'race'},C.freshSave()),b=C.makeRace({track:'market',mode:'race'},C.freshSave());
+ for(let i=0;i<600;i++)C.updateTractor(a,1/60);for(let i=0;i<1200;i++)C.updateTractor(b,1/120);
+ assert.ok(Math.hypot(a.tractor.trailer.x-b.tractor.trailer.x,a.tractor.trailer.y-b.tractor.trailer.y)<.001);
 });

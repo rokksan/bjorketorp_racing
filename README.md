@@ -96,3 +96,17 @@ Kommunmästerskapet räknar pallplatser i ordningen marknad → lerbana → natt
 Fyra namngivna rivaler har olika fart och linjeval. Skuldboken visar hur ofta du slagit dem. Verkstaden har gratis, utbytbara trimval med nackdelar, ovanpå befintliga köpta uppgraderingar. Trimning är avstängd i tidsträning. En kontrollerad sladd följd av upprätning ger en kort fartbonus.
 
 Crossföraren har nummer 49 och kör runt hela banan. Efter två sekunders varning gör han en tre sekunder lång burnout som hinder och sprutar kortlivad lera. I tidsträning är crossen endast visuell. Rörelse och hinder följer loppets klocka och paus; reducerad rörelse minskar lerpartiklarna. Publiken har korta pratbubblor utan streck eller layoutförskjutningar.
+
+## Stridsprototyp: Skrotkriget
+
+Välj Skrotkriget under Spelform. Tre 960×600-banor med följkamera och minimap: Skrotkriget, Torvträsket och Flygrakan. Två varv, WASD/pilar, mus/klick, R omladdning, Shift spurt och Space föremål.
+
+Fyra vapen med olika bärvikt, rekyl och träffeffekt: hagel knuffar brett, pistol dränerar spurt, studsare bryter boost på långt håll och potatiskanon gör områdesträffar med fyra sekunders mosfält. Även skytten påverkas av mos och närliggande explosioner. Rivalerna använder var sitt vapen.
+
+Varje målgång ger ett mästerskapssteg för valt vapen. Tre steg ger en nivå och 6 % kortare omladdning, max tre nivåer. Progressionen sparas separat från mynt, rekord och cup. Alla vapen och banor kan väljas direkt.
+
+Korta inspelade skott, mekanisk omladdning och tre kackelvarianter; potatiskanonen har bearbetade puff- och nedslagsljud. Källor och redigeringar finns i assets/audio/ATTRIBUTION.md. Inga nya publikrop.
+
+Validera med node tests/combat.test.cjs samt game, audio och lifecycle-testsviterna.
+
+Torestorps kött och krut finns som egen flik och via startmenyn. Alla fyra vapen kan väljas gratis. Hemkört i slutstycket kostar 120/300/650 mynt och minskar omladdning med 5 procentenheter per nivå; Svågerns axelprotes kostar 100/260/580 och minskar egen rekyl med 12 % per nivå. Tre nivåer per uppgradering och vapen. Köpt trim kombineras med mästerskap. Vapenval, bankortens stridsbaneval och köp sparas lokalt; äldre sparningar migreras utan kostnad eller förlorad progression.

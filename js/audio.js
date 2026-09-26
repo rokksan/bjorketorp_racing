@@ -10,6 +10,7 @@
     orchard:track('Corncob','corncob'),
     result:track('Still Pickin','still-pickin')
   };
+  const SAMPLES=Object.fromEntries(['potato','potato-hit','shotgun','pistol','rifle','shell','rack','chamber','cluck-1','cluck-2','cluck-3'].map(n=>[n,'assets/audio/sfx/'+n+'.wav']));
   const midi=n=>440*Math.pow(2,(n-69)/12);
   class AudioEngine {
     constructor(settings) {
@@ -17,6 +18,7 @@
         ...settings
       };
       this.context=null;
+      this.samples={};this.destroyed=false;this.cluckIndex=0;
       this.theme='farm';
       this.step=0;
       this.next=0;
@@ -62,6 +64,7 @@
           this.musicSource.connect(this.music);
           this.player.addEventListener('error',()=>console.warn('Musikfilen kunde inte laddas:',this.player.getAttribute('src')));
           this.apply();
+          this.samplesReady=this.loadSamples();
         }
         if(this.context.state==='suspended')await this.context.resume();
         this.start();
@@ -71,6 +74,28 @@
         console.warn('Ljud kunde inte startas:',error.message);
         return false;
       }
+    }
+    async loadSamples() {
+      if(!root.fetch)return;
+      await Promise.all(Object.entries(SAMPLES).map(async([name,url])=>{
+        try {
+          const response=await root.fetch(url);
+          if(!response.ok)throw new Error(response.status);
+          const buffer=await this.context.decodeAudioData(await response.arrayBuffer());
+          if(!this.destroyed)this.samples[name]=buffer;
+        } catch(error){console.warn('Ljudeffekt kunde inte laddas:',url,error.message);}
+      }));
+    }
+    sample(name,volume=1,delay=0,pan=0) {
+      const buffer=this.samples[name];
+      if(!buffer)return false;
+      const c=this.context,source=c.createBufferSource(),gain=c.createGain(),panner=c.createStereoPanner?.();
+      source.buffer=buffer;gain.gain.value=volume;source.connect(gain);
+      if(panner){panner.pan.value=pan;gain.connect(panner);panner.connect(this.sfx);}else gain.connect(this.sfx);
+      this.nodes.add(source);
+      source.onended=()=>{this.nodes.delete(source);source.disconnect();gain.disconnect();panner?.disconnect();};
+      source.start(c.currentTime+delay);
+      return true;
     }
     apply() {
       if(!this.context)return;
@@ -211,17 +236,29 @@
         this.next+=.25;this.step++;
       }
     }
-    play(name) {
+    play(event) {
+      const name=typeof event==='string'?event:event.name,volume=typeof event==='string'?1:(event.volume??1),pan=typeof event==='string'?0:(event.pan??0);
       const c=this.context;
       if(!c||this.paused||this.settings.mute)return;
       const now=c.currentTime;
       if(now-(this.lastSfx[name]||-100)<( {
-        coin:.07,step:.1,grass:.1,bump:.3,sprint:.4,boost:.3
+        coin:.07,step:.1,grass:.1,bump:.3,cluck:.22,sprint:.4,boost:.3
       }
       [name]||.05))return;
       this.lastSfx[name]=now;
+      if(['potato','potato-hit','shotgun','pistol','rifle'].includes(name)&&this.sample(name,volume,0,pan))return;
+      if(name==='cluck'){this.sample('cluck-'+(1+this.cluckIndex++%3),volume,0,pan);return;}
+      if(name==='reload-start'){
+        const weapon=event.weapon||'shotgun';
+        if(weapon==='shotgun'){this.sample('shell',.8,.12);this.sample('shell',.7,1.1);}
+        else this.sample(weapon==='pistol'?'chamber':'shell',.8,.12);
+        return;
+      }
+      if(name==='reload'&&this.sample('rack',.8))return;
       const n=(note,offset=0,duration=.1,type='square',vol=.22,slide=null)=>this.tone(note,now+offset,duration,type,vol,0,this.sfx,slide);
       switch(name) {
+        case'shotgun':n(34,0,.18,'triangle',.65,20);this.hiss(now,.18,.7,1000,this.sfx);break;
+        case'reload':n(65,0,.04,'triangle',.22);this.hiss(now+.07,.06,.18,2200,this.sfx);break;
         case'cross':this.tone(31,now,.6,'sawtooth',.055,.7,this.ambient,44);this.tone(44,now+.6,.8,'sawtooth',.045,.7,this.ambient,28);break;
         case'argument':[48,55,47,58].forEach((p,i)=>n(p,i*.14,.12,'sawtooth',.12));break;
         case'scuffle':for(let i=0;i<4;i++){this.hiss(now+i*.16,.12,.25,700,this.sfx);n(43+i, i*.16,.12,'triangle',.2,32);}break;
@@ -282,6 +319,7 @@
       }
     }
     destroy() {
+      this.destroyed=true;this.samples={};
       this.pause(true);
       this.musicSource?.disconnect();
       if(this.player){this.player.removeAttribute('src');this.player.load();}
@@ -289,6 +327,6 @@
     }
   }
   root.FarmAudio= {
-    AudioEngine,THEMES
+    AudioEngine,THEMES,SAMPLES
   };
 })(window);

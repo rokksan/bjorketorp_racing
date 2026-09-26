@@ -1,0 +1,59 @@
+{
+  "processing": "Mono 22050 Hz, highpass 110 Hz, 3 ms fade in, 70 ms fade out, gain toward -18 dBFS RMS capped at -3 dBFS peak",
+  "clips": [
+    {
+      "file": "shotgun.wav",
+      "source": "shotty.wav",
+      "start": 0,
+      "duration": 0.65
+    },
+    {
+      "file": "pistol.wav",
+      "source": "cz.wav",
+      "start": 2.8,
+      "duration": 0.65
+    },
+    {
+      "file": "rifle.wav",
+      "source": "mosin.wav",
+      "start": 0.42,
+      "duration": 1.1
+    },
+    {
+      "file": "shell.wav",
+      "source": "First Shell.mp3",
+      "start": 0.34,
+      "duration": 0.58
+    },
+    {
+      "file": "rack.wav",
+      "source": "Rack.mp3",
+      "start": 0.59,
+      "duration": 0.53
+    },
+    {
+      "file": "chamber.wav",
+      "source": "Shell in Chamber.mp3",
+      "start": 0.49,
+      "duration": 0.9
+    },
+    {
+      "file": "cluck-1.wav",
+      "source": "chicken.mp3",
+      "start": 1.17,
+      "duration": 0.65
+    },
+    {
+      "file": "cluck-2.wav",
+      "source": "chicken.mp3",
+      "start": 2.78,
+      "duration": 0.55
+    },
+    {
+      "file": "cluck-3.wav",
+      "source": "chicken.mp3",
+      "start": 4.64,
+      "duration": 0.65
+    }
+  ]
+}
