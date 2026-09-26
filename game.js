@@ -37,7 +37,7 @@
     $('global-toast').textContent=text;
     $('global-toast').classList.remove('hidden');
     clearTimeout(toastTimer);
-    toastTimer=setTimeout(()=>$('global-toast').classList.add('hidden'),3300);
+    toastTimer=setTimeout(()=>$('global-toast').classList.add('hidden'),5500);
   }
   function setText(id,value) {
     if($(id).textContent!==String(value))$(id).textContent=value;
@@ -55,9 +55,10 @@
     setText('xp-label',`Gårdsnivå ${level}`);
     $('xp-bar').style.width=`${save.xp%150/1.5}%`;
     const upgrades=Object.values(save.upgrades).reduce((a,b)=>a+b,0);
-    setText('farm-level',upgrades>=6?'BYGDENS MÄSTARGÅRD':upgrades>=3?'DEN VÄXANDE HÖNSGÅRDEN':'LILLA HÖNSGÅRDEN');
+    setText('farm-level',upgrades>=6?'PANTKUNGENS NEONPALATS':upgrades>=3?'SVÅGERNS SKULDIMPERIUM':'KOMMUNENS BORTGLÖMDA UTHUS');
     setText('farm-level-copy',upgrades>=6?'Hemma bra. På banan ännu bättre.':`${Math.max(0,(upgrades<3?3:6)-upgrades)} uppgraderingar till nästa gårdsutseende.`);
     A.drawFarm($('farm-scene'),save,0);
+    modeCopy();
   }
   function renderTracks() {
     const season=C.TRACKS.findIndex(t=>t.id===selected.track);
@@ -105,14 +106,14 @@
       $('chicken-cards').append(button);
       A.drawPortrait(button.querySelector('canvas'),c.color,save.skin);
     }
-    setText('chicken-perk',trial?'Gårds-Greta utan uppgraderingar · samma villkor för varje rekord':C.CHARACTERS[selected.chicken].perk);
+    setText('chicken-perk',trial?'Svets-Greta utan uppgraderingar · samma villkor för varje rekord':C.CHARACTERS[selected.chicken].tag+' '+C.CHARACTERS[selected.chicken].perk);
   }
   function renderWorkshop() {
     $('upgrade-cards').replaceChildren();
     for(const [key,u] of Object.entries(C.UPGRADES)) {
       const level=save.upgrades[key],max=level===u.max,cost=u.cost[level],card=document.createElement('article');
       card.className='upgrade-card';
-      card.innerHTML=`<div class="upgrade-icon"><canvas width="32" height="32" aria-hidden="true"></canvas></div><h3>${u.name}</h3><p>${u.description}</p><div class="upgrade-levels" aria-label="Nivå ${level} av 3">${[0,1,2].map(i=>`<i class="${i<level?'filled':''}"></i>`).join('')}</div><small>NIVÅ ${level} / 3</small><button class="secondary" ${max||save.coins<cost?'disabled':''}>${max?'Fullt uppgraderad':`Uppgradera · ${cost} mynt`}</button>`;
+      card.innerHTML=`<div class="upgrade-icon"><canvas width="32" height="32" aria-hidden="true"></canvas></div><h3>${u.name}</h3><p>${u.description}</p><p class="upgrade-next">${max?'Svågern vägrar ta mer ansvar.':`Nästa: ${u.tiers[level]}`}</p><div class="upgrade-levels" aria-label="Nivå ${level} av 3">${[0,1,2].map(i=>`<i class="${i<level?'filled':''}"></i>`).join('')}</div><small>${level?u.tiers[level-1]:'Ännu inte skuldsatt'} · NIVÅ ${level} / 3</small><button class="secondary" ${max||save.coins<cost?'disabled':''}>${max?'Fullt uppgraderad':`Uppgradera · ${cost} mynt`}</button>`;
       card.querySelector('button').addEventListener('click',()=> {
         if(C.buyUpgrade(save,key)) {
           audio.unlock();
@@ -127,8 +128,15 @@
       $('upgrade-cards').append(card);
       A.drawUpgrade(card.querySelector('canvas'),key);
     }
+    for(const [key,b] of Object.entries(C.BUILDS)) {
+      const card=document.createElement('article');card.className='upgrade-card';
+      const unlocked=save.races>=b.unlock;
+      card.innerHTML=`<h3>${b.name}</h3><p>${b.description}</p><small>${unlocked?'Gratis att byta • ett trimval åt gången':`Låses upp efter ${b.unlock} lopp`}</small><button class="secondary" aria-pressed="${save.build===key}" ${unlocked?'':'disabled'}>${save.build===key?'Monterat':unlocked?'Montera':`${save.races} / ${b.unlock} lopp`}</button>`;
+      card.querySelector('button').onclick=()=>{save.build=key;persist();renderWorkshop();modeCopy();audio.play('click');};
+      $('upgrade-cards').append(card);
+    }
     $('skin-buttons').replaceChildren();
-    for(const [key,name,unlocked,desc] of [['classic','Gårdsoriginal',true,'Alltid hemma'],['blue','Blå halsduk',save.races>=3,'Kör klart 3 lopp'],['gold','Guldhalsduk',C.TRACKS.every(t=>(save.medals[`${t.id}:normal`]||0)===3),'Guld på alla banor i marknadstempo']]) {
+    for(const [key,name,unlocked,desc] of [['classic','Ärvd från dödsboet',true,'Luktar fortfarande lagård'],['blue','Kommunens avlagda disktrasa',save.races>=3,'Kör klart 3 lopp'],['gold','Förgylld pantkungstrasa',C.TRACKS.every(t=>(save.medals[`${t.id}:normal`]||0)===3),'Guld på alla banor i Pantpanik']]) {
       const button=document.createElement('button');
       button.className=save.skin===key?'selected':'';
       button.disabled=!unlocked;
@@ -148,7 +156,15 @@
   function renderJournal() {
     const next=C.TRACKS.find(t=>save.races<t.unlock);
     setText('unlock-note',next?`Nästa utflykt: ${next.name}. ${save.races} / ${next.unlock} avslutade lopp. Även en femteplats räknas!`:'Alla banor är öppna! Samla nio guldmedaljer, bygg ut gården och jaga dina rekord.');
+    const cup=C.TRACKS[save.cup.stage];
+    $('unlock-note').textContent+=` Kommunmästerskapet: ${save.cup.stage}/3 pallplatser. Nästa: ${cup.short}. Kör ett gårdslopp på valfri svårighet och kom topp 3. Tre etapper ger 150 mynt och en pokal. Titlar: ${save.cup.titles}.`;
     $('contract-cards').replaceChildren();
+    for(const [i,rival] of C.RIVALS.entries()) {
+      const card=document.createElement('article');card.className='contract-card';
+      card.innerHTML=`<h4>${rival.name}</h4><p>“${rival.quip}”</p><small>Du har slagit rivalen ${save.rivalWins[i]} gånger.</small>`;
+      $('contract-cards').append(card);
+    }
+
     for(const c of C.CONTRACTS) {
       const claimed=save.contracts[c.id]||0,progress=Math.min(c.target,Math.max(0,save[c.id]-claimed*c.target)),ready=progress>=c.target,card=document.createElement('article');
       card.className='contract-card';
@@ -166,7 +182,7 @@
       };
       $('contract-cards').append(card);
     }
-    $('medal-shelf').innerHTML=C.TRACKS.map(t=>`<div class="medal-row"><b>${t.short}</b>${['easy','normal','hard'].map((d,i)=>{const m=save.medals[`${t.id}:${d}`]||0;return `<span class="${m?'earned':''}">${['—','● BRONS','● SILVER','★ GULD'][m]}<small>${['GÅRDSTUR','MARKNAD','ELIT'][i]}</small></span>`;}).join('')}</div>`).join('');
+    $('medal-shelf').innerHTML=C.TRACKS.map(t=>`<div class="medal-row"><b>${t.short}</b>${['easy','normal','hard'].map((d,i)=>{const m=save.medals[`${t.id}:${d}`]||0;return `<span class="${m?'earned':''}">${['—','● BRONS','● SILVER','★ GULD'][m]}<small>${['BAKFYLLA','PANTPANIK','FOGDEN'][i]}</small></span>`;}).join('')}</div>`).join('');
   }
   function setView(next) {
     view=next;
@@ -214,9 +230,9 @@
     $('results').classList.add('hidden');
     $('race-screen').classList.remove('hidden');
     setText('race-track-name',race.track.name);
-    setText('race-tip',selected.mode==='trial'?'Jaga din bästa tid. Spökhönan följer ditt personbästa och kan inte krocka med dig.':'Den ljusa stigen är din bana. Majs ger extra gårdsmynt när du går i mål.');
+    setText('race-tip',selected.mode==='trial'?'Jaga din bästa tid. Spökhönan följer ditt personbästa och kan inte krocka med dig.':race.feedback);
     setText('race-mode-label',selected.mode==='trial'?(race.ghost?'TIDSTRÄNING · SPÖKHÖNA AKTIV':'TIDSTRÄNING · STANDARDHÖNA'): {
-      easy:'LUGN GÅRDSTUR',normal:'MARKNADSTEMPO',hard:'BYGDENS ELIT'
+      easy:'SÖNDAGSBAKFYLLA',normal:'PANTPANIK',hard:'FOGDEN KOMMER'
     }
     [selected.difficulty]);
     accumulator=0;
@@ -246,12 +262,13 @@
     $('results').classList.remove('hidden');
     const trial=race.options.mode==='trial',p=race.actors[0];
     setText('result-title',trial?(result.newRecord?'Nytt personbästa!':'En fin träningsrunda.'):result.position===1?'Gårdens nya stolthet!':result.position<=3?'En plats på pallen!':'Varje runda räknas.');
-    setText('result-copy',`${race.track.name} · ${trial?'Tidsträning':`${result.position}:a av 5 hönor`} ${result.newRecord?'· Nytt banrekord!':''}`);
+    setText('result-copy',`${race.track.name} · ${trial?'Tidsträning':`${result.position}:a av 5 hönor`} ${result.newRecord?'· Nytt banrekord!':''}${trial?'':` · ${C.RIVALS[0].name}: ${save.rivalWins[0]>0?'Nästa gång tar jag fan traktorn.':C.RIVALS[0].quip}`}`);
     A.drawPortrait($('result-bird'),p.color,save.skin);
     $('result-stats').innerHTML=`<div><span>LOPPTID</span><strong>${C.formatTime(result.time)}</strong></div><div><span>BÄSTA VARV</span><strong>${C.formatTime(result.bestLap)}</strong></div><div><span>MAJSKORN</span><strong>${result.corn}</strong></div>`;
-    $('result-rewards').innerHTML=trial?`Träning ger färdighet.<small>${result.newRecord&&save.ghosts[race.track.id]?'Din nya spökhöna är sparad. Slå den nästa gång!':'Ditt bästa lopp blir en spökhöna att jaga.'} Inga gårdsmynt delas ut.</small>`:`+${result.coins} gårdsmynt<small>Placering + ${result.corn*2} för majs ${result.clean?'+ 10 för ett rent lopp':''} · ${save.coins} mynt i kassan</small>`;
+    $('result-rewards').innerHTML=trial?`Träning ger färdighet.<small>${result.newRecord&&save.ghosts[race.track.id]?'Din nya spökhöna är sparad. Slå den nästa gång!':'Ditt bästa lopp blir en spökhöna att jaga.'} Inga gårdsmynt delas ut.</small>`:`+${result.coins} gårdsmynt<small>Placering + ${result.corn*6} för majs ${result.clean?'+ 10 för ett rent lopp':''} · ${save.coins} mynt i kassan</small>`;
     const unlocked=C.TRACKS.filter(t=>oldRaces<t.unlock&&save.races>=t.unlock).map(t=>`${t.name} är nu öppen!`);
-    if(oldRaces<3&&save.races>=3)unlocked.push('Blå halsduk upplåst i hönshuset!');
+    if(result.cupMessage)unlocked.push(result.cupMessage);
+    if(oldRaces<3&&save.races>=3)unlocked.push('Kommunens avlagda disktrasa upplåst i hönshuset!');
     if(!trial&&C.CONTRACTS.some(c=>save[c.id]>=((save.contracts[c.id]||0)+1)*c.target))unlocked.push('Ett uppdrag är klart. Hämta belöningen i gårdsboken.');
     $('result-unlocks').classList.toggle('hidden',!unlocked.length);
     setText('result-unlocks',unlocked.join(' '));
@@ -285,7 +302,7 @@
     setText('lap-time',C.formatTime(race.time-p.lapStart));
     $('stamina-fill').style.width=`${p.stamina/race.maxStamina*100}%`;
     const item= {
-      boost:'Fartägg',shield:'Äggsköld',mud:'Lerbomb'
+      boost:'Motorsprit i äggkopp',shield:'Volvodörr från skroten',mud:'Kommunalt slamskott'
     }
     [p.item]||'Plocka ett ägg';
     setText('item-name',race.options.mode==='trial'?'Tidsträning':item);
@@ -296,7 +313,7 @@
     if($('countdown').querySelector('strong').textContent!==String(count))$('countdown').querySelector('strong').textContent=count;
     $('race-toast').classList.toggle('hidden',race.feedbackTime<=0||race.countdown>0);
     setText('race-toast',race.feedback);
-    setText('crowd-caption',race.crowdSpeechTime>0?`📣 ${race.crowd[race.crowdSpeaker]?.name||'PUBLIKEN'}: ”${race.crowdSpeech}”`:'KLADDIS FANCLUB • Emil ”Kladdis” Callheim hälsar: håll i fjädrarna!');
+
   }
   function pauseRace(show=true) {
     if(screen!=='race'||!race||race.phase==='paused')return;
@@ -459,7 +476,7 @@
   };
   function modeCopy() {
     setText('session-summary',selected.mode==='trial'?'3 varv · solo · rekordjakt':'3 varv · cirka 1 minut · 5 hönor');
-    setText('start-copy',selected.mode==='trial'?'Hitta din linje, spara spurten och sätt ett nytt personbästa.':'Samla majs, hitta din linje och spara en spurt till slutet.');
+    setText('start-copy',selected.mode==='trial'?'Hitta din linje, spara spurten och sätt ett nytt personbästa.':`Cup ${save.cup.stage+1}/3: pallplats på ${C.TRACKS[save.cup.stage].short}. Trimning: ${C.BUILDS[save.build].name}.`);
     setText('mode-copy',selected.mode==='trial'?'Jaga din egen spökhöna! Solo med standard-Greta. Ditt bästa lopp sparas som en spökhöna till nästa försök.':'Alla målgångar ger gårdsmynt. En pallplats ger medalj!');
     $('difficulty').disabled=selected.mode==='trial';
   }

@@ -49,3 +49,12 @@ Svårighetskurvan och ekonomin är första balansvärden, inte påstått färdig
 Bana 2 är ombyggd till en lång S-form med hårnålar; bana 3 till en ojämn, teknisk skördefestbana. Regnbanan använder dämpade grågröna toner, diken, traktorer och en liten lada. Nattbanan använder blåviolett, varma lyktor, pumpor, en smal träbro och ett öppet loggolv. Den torra mittlinjen går att följa runt lerhindren. Bron begränsar den körbara bredden och tillåter inga genvägar längs räcket.
 
 Namngivna publikpar grälar och slåss i dammoln, utan blod. Publikens hela sprite inklusive flaska och gungning reserveras vid placering så att dekorationer och publik inte fyller körfältet. Dialogen är DOM-text ovanför spelplanen, inte en kortvarig canvasbubbla. Gräl och slagsmål har egna syntetiska ljud. Regnbanan har regn och traktorpuls; nattbanan snabbare skördedans och syrsliknande pip. Inga inspelade röster.
+
+## Bonncyberpunk och pratbubblor
+Utrustningen bygger på gårdsskrot: gasoltuber, svetsbrillor, plåtpansar och en grön terminal. Cyan och rosa är små teknikaccenter i den varma gårdspaletten. Nya namn använder befintliga karaktärs-ID:n så att sparfiler fungerar. Publikbubblor väljer ledig mark med samma geometriska korridorkontroll som dekorationerna. Smala skärmar använder en läsbar bubbla ovanför körfältet; en tunn linje identifierar talaren. Originalets Kladdis-repliker är kvar bland nya vischanrepliker.
+
+## Revidering efter spelarintryck
+Pratlinjerna är borttagna helt: bubblorna använder talarnamn och diskret markering över bonden. Den musikaliska riktningen är nu svenska bygdegårdens sista dans: mollvals på gården, svängig fyrtakt på marknaden, långsammare shuffle i leran och snabbare skördedans på natten. Fem originalmelodier använder dubbla ostämda och lågpassfiltrerade stämmor, växelbas och ackordslag. Musikens fyrkantsvåg och konstanta arpeggio har tagits bort. Effekter har fortsatt separata volymkontroller.
+
+## Husvagnsfesten
+Husvagnar, brädade hus, flaskbackar och sovande figurer i buskar förstärker den lekfulla misären. Z-symboler visar tydligt att figurerna sover. Samma miljö finns i gårdsvyn. Diskret husvagnsrök stängs av vid minskad rörelse. Namnen behålls. Banmusiken går i 164–184 BPM med vibrato på fiolliknande stämmor, snabba syntetiska banjorullar och växelbas. Instrumenten är fortfarande lokal syntes, inte inspelade stråkar eller banjo.

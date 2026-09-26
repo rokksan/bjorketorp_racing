@@ -1,6 +1,6 @@
 # Hönsrace 2000
 
-Ett fristående racingspel i Björketorp, med egen pixelgrafik, egna chiptunes och en gård som växer mellan loppen. Vanilla JavaScript och Canvas; inga externa tjänster, byggsteg eller paket behövs för att spela.
+Ett fristående racingspel i Björketorp, med egen pixelgrafik, licensierad bluegrass och en gård som växer mellan loppen. Vanilla JavaScript och Canvas; inga externa tjänster, byggsteg eller paket behövs för att spela.
 
 ## Starta
 
@@ -40,7 +40,7 @@ Gården sparas lokalt under `bjorketorp-farm-v2`. Lopp och segrar från den gaml
 | --- | --- |
 | `js/core.js` | Ren simulering, banor, AI, progression och validering av sparfiler |
 | `js/art.js` | Gemensam palett, pixelrutnät, spriter, miljöer och ritning |
-| `js/audio.js` | Fem egna flerspåriga arrangemang, atmosfär och ljudeffekter |
+| `js/audio.js` | Fyra lokala CC BY-musikfiler, atmosfär och ljudeffekter |
 | `game.js` | Menyer, tangentbord/pekare, sparning och en animationsloop |
 | `style.css` | Responsiv gårdsmeny, HUD och dialoger |
 | `tools/export-assets.cjs` | Export av grafikens pixelprimitiver till återanvändbara SVG-filer |
@@ -48,7 +48,7 @@ Gården sparas lokalt under `bjorketorp-farm-v2`. Lopp och segrar från den gaml
 
 Simuleringen körs med fasta 120 steg per sekund. All statisk bangrafik cachas. Samma spline används för banans ritning, körgränser, AI och varvräkning. Dekorernas hela visuella rektangel kontrolleras mot banan. Varv kräver fyra ordnade sektorer; att backa över mållinjen ger inget gratisvarv.
 
-Ljud aktiveras först efter en interaktion. Separata volymer finns för musik, effekter och atmosfär. Musiken har melodi, bas, arpeggio och slagverk; sista varvet ökar tempot. Paus stoppar både schemaläggning och aktiva ljudkällor.
+Ljud aktiveras först efter en interaktion. Separata volymer finns för musik, effekter och atmosfär. Musiken spelas från lokala MP3-filer via webbläsarens ljudspelare, utan syntetiska musikstämmor. Se [musikcredits](assets/audio/ATTRIBUTION.md). Paus stoppar både schemaläggning och aktiva ljudkällor.
 
 ## Testa
 
@@ -72,3 +72,27 @@ Publiken är tillbaka: originalets 21 Kladdis-repliker, bönder utanför körfä
 Marknadsrundan behåller vårsolen. Kladdis leriga långrunda har en ny utdragen hårnålsbana, regn, traktorer, lada, diken och lerhinder. Callheims nattliga skördefest har S-kurvor, en smal träbro, ett öppet loggolv, pumpor och lyktor. Bönderna har rutiga skjortor, lappade hängselbyxor, flaskor och ostadiga rörelser; par grälar och hamnar i tecknade dammoln var trettonde sekund. Publikens namngivna repliker ligger i en större panel ovanför banan i upp till 6,5 sekunder. Minskad rörelse stänger av regnanimation och gungningar.
 
 Bana 2 och 3 har ny geometri: tidigare tider och spökinspelningar för dessa banor pensioneras vid inläsning. Mynt, uppgraderingar, medaljer och upplåsningar behålls. Marknadsrekorden påverkas inte.
+
+### Bonncyberpunk från Björketorp
+Svets-Greta har svetsbrillor och verktygsbälte, Raketragge dubbla gasoltuber, Plåt-Pär skrotpansar och Ägg.exe en hembyggd terminal. Utrustningen syns i porträtt, lopp och på gården. Sparade karaktärsval och egenskaper behålls. Nya originalrepliker blandar fiber i ladan, buss på torsdag och hemmatrimmad teknik med den gamla Kladdis-dialogen.
+
+På breda skärmar söker pratbubblorna en fri yta nära talaren, helt utanför körfältet och utan att täcka andra bönder. Om ingen yta finns, eller på mobil, används en större pratbubbla ovanför banan med en tunn linje till talaren. En bubbla visas åt gången.
+
+### Bygdedans och kommunal undergång
+Publikens pratlinjer och dekorativa bubbelstreck är borttagna. Namnet i bubblan och en liten markering över bonden identifierar talaren. Alla uppgraderingar har tre egna nivånamn, med samma priser och effekter som tidigare.
+
+Musiken är omkomponerad till fem egna melodier: bakfyllevals, svängig konkursmarknadsdans, röddiesellunk i regnet, sista dansen före utmätning och en målgångsvals. Två lätt ostämda, lågpassfiltrerade stämmor ger en dragspelsliknande klang med längre anslag; växelbas, ackordslag och trummor ersätter den tidigare fyrkantsmelodin och de ständiga arpeggiona. Ljuden syntetiseras fortfarande lokalt; inga externa inspelningar behövs.
+
+Miljöerna innehåller nu lagade husvagnar, brädade småhus, flaskbackar och sovande festprissar i buskar med tydliga Z-symboler. Samma kontroll av hela dekorationsytan håller dem utanför körfältet. Banorna spelar nu Hillbilly Swing, River Valley Breakdown och Corncob. Gården och resultatskärmen spelar Still Pickin.
+
+Publikens dialogpanel och långa fanklubbsrepliker är borttagna ur loppet. Korta svordomar syns bara i slagsmålsmolnen; de påverkar aldrig sidlayouten. Skrotbilar med 240-, 740- och 850-inspirerade silhuetter är cirka två bondehöjder långa. Startmenyn har en tecknad plåtkrock med små lågor. Alla ritade flaggor använder svenska färger och kors.
+
+Banjoriktningen har skruvats vidare till 208–228 BPM och genomgående sextondelsplock. Banjon använder nu Karplus–Strong-strängsyntes med ett kort anslag och avklingande resonans, i stället för tre oscillatorpip. Fiolen tar mer bakgrundsroll och lämnar plats för banjosolon. Användarens referens är YouTube-videon “Banjo Music (VERY INTENSE)”; inga ljud eller melodier har hämtats från videon.
+
+## Bygdecup, trimning och Kladdis
+
+Kommunmästerskapet räknar pallplatser i ordningen marknad → lerbana → nattbana. Gårdslopp på valfri svårighet räknas; tidsträning gör det inte. Slutförd cup ger 150 extra mynt, en sparad titel och en pokal på gården.
+
+Fyra namngivna rivaler har olika fart och linjeval. Skuldboken visar hur ofta du slagit dem. Verkstaden har gratis, utbytbara trimval med nackdelar, ovanpå befintliga köpta uppgraderingar. Trimning är avstängd i tidsträning. En kontrollerad sladd följd av upprätning ger en kort fartbonus.
+
+Crossföraren har nummer 49 och kör runt hela banan. Efter två sekunders varning gör han en tre sekunder lång burnout som hinder och sprutar kortlivad lera. I tidsträning är crossen endast visuell. Rörelse och hinder följer loppets klocka och paus; reducerad rörelse minskar lerpartiklarna. Publiken har korta pratbubblor utan streck eller layoutförskjutningar.

@@ -1,22 +1,14 @@
-/* Original multi-channel chiptune arrangements. All notes synthesized locally. */
+/* Licensed music recordings with separate procedural effects and ambience. */
 (function(root) {
   'use strict';
-  const THEMES= {
-    farm: {
-      bpm:92,key:60,chords:[0,5,9,7,0,5,2,7],lead:[12,null,16,19,16,null,14,12, 9,null,12,16,14,12,9,null, 12,16,19,null,21,19,16,14, 11,null,14,17,16,14,12,null]
-    },
-    market: {
-      bpm:122,key:60,chords:[0,5,0,7,9,5,2,7],lead:[12,16,19,null,19,21,19,16, 17,null,16,14,12,14,16,null, 12,16,19,24,23,21,19,16, 14,17,19,17,16,14,12,null]
-    },
-    meadow: {
-      bpm:104,key:55,chords:[0,9,5,7,0,5,2,7],lead:[19,null,16,14,12,null,14,16, 21,19,16,null,14,12,9,null, 17,19,21,null,19,17,16,12, 14,null,16,19,17,14,12,null]
-    },
-    orchard: {
-      bpm:142,key:57,chords:[0,5,9,7,5,0,2,7],lead:[12,14,16,19,16,14,12,null, 17,16,14,null,12,9,12,14, 16,19,21,19,17,16,14,12, 11,14,17,19,17,14,12,null]
-    },
-    result: {
-      bpm:100,key:60,chords:[0,5,7,0,9,5,7,0],lead:[12,null,16,null,19,null,24,null,21,19,17,16,14,null,12,null,12,16,19,24,21,null,19,null,17,16,14,11,12,null,null,null]
-    }
+  // Recordings by Kevin MacLeod, CC BY 4.0; see assets/audio/ATTRIBUTION.md.
+  const track=(title,file)=>({title,src:'assets/audio/'+file+'.mp3'});
+  const THEMES={
+    farm:track('Still Pickin','still-pickin'),
+    market:track('Hillbilly Swing','hillbilly-swing'),
+    meadow:track('River Valley Breakdown','river-valley-breakdown'),
+    orchard:track('Corncob','corncob'),
+    result:track('Still Pickin','still-pickin')
   };
   const midi=n=>440*Math.pow(2,(n-69)/12);
   class AudioEngine {
@@ -33,6 +25,9 @@
       this.lastLap=false;
       this.nodes=new Set();
       this.noise=null;
+      this.player=null;
+      this.musicSource=null;
+      this.musicRequest=0;
       this.lastSfx= {
       };
     }
@@ -59,6 +54,12 @@
             prev=(prev+Math.random()*.16-.08)*.97;
             data[i]=prev;
           }
+          this.player=new root.Audio();
+          this.player.loop=true;
+          this.player.preload='metadata';
+          this.musicSource=c.createMediaElementSource(this.player);
+          this.musicSource.connect(this.music);
+          this.player.addEventListener('error',()=>console.warn('Musikfilen kunde inte laddas:',this.player.getAttribute('src')));
           this.apply();
         }
         if(this.context.state==='suspended')await this.context.resume();
@@ -74,7 +75,7 @@
       if(!this.context)return;
       const t=this.context.currentTime;
       this.master.gain.setTargetAtTime(this.settings.mute?0:.75,t,.03);
-      this.music.gain.setTargetAtTime(this.settings.music*.38,t,.04);
+      this.music.gain.setTargetAtTime(this.settings.music*.9,t,.04);
       this.sfx.gain.setTargetAtTime(this.settings.sfx*.55,t,.04);
       this.ambient.gain.setTargetAtTime(this.settings.ambience*.23,t,.04);
     }
@@ -86,19 +87,35 @@
     }
     setTheme(theme) {
       if(this.theme===theme)return;
-      this.theme=theme;
+      this.theme=THEMES[theme]?theme:'farm';
       this.step=0;
       this.lastLap=false;
       if(this.context) {
         this.stopVoices();
         this.next=this.context.currentTime+.04;
+        this.startMusic();
       }
     }
     start() {
-      if(!this.context||this.timer||this.paused)return;
+      if(!this.context||this.paused)return;
+      this.startMusic();
+      if(this.timer)return;
       this.next=this.context.currentTime+.04;
       this.timer=setInterval(()=>this.schedule(),25);
       this.schedule();
+    }
+    startMusic() {
+      if(!this.player||this.paused)return;
+      const src=THEMES[this.theme].src;
+      if(this.player.getAttribute('src')!==src) {
+        this.player.pause();
+        this.player.src=src;
+      } else if(!this.player.paused)return;
+      const request=++this.musicRequest;
+      this.player.play().catch(error=>{
+        // Source changes and pausing can cancel an earlier play request.
+        if(request===this.musicRequest&&error.name!=='AbortError')console.warn('Musiken kunde inte startas:',error.message);
+      });
     }
     stopVoices() {
       for(const node of this.nodes) {
@@ -113,6 +130,8 @@
     pause(value) {
       this.paused=value;
       if(value) {
+        this.musicRequest++;
+        this.player?.pause();
         clearInterval(this.timer);
         this.timer=null;
         this.stopVoices();
@@ -122,13 +141,19 @@
     tone(note,start,duration=.15,type='square',volume=.1,pan=0,bus=this.music,slide=null) {
       if(!this.context||!bus)return;
       const c=this.context,o=c.createOscillator(),gain=c.createGain();
-      o.type=type;
+      o.type=['reed','fiddle'].includes(type)?'sawtooth':type;
       o.frequency.setValueAtTime(midi(note),start);
+      if(type==='fiddle')for(let offset=.025;offset<duration;offset+=.025) {
+        const vibrato=Math.sin(offset*Math.PI*2*5.8)*.085*Math.min(1,offset/.09);
+        o.frequency.setValueAtTime(midi(note+vibrato),start+offset);
+      }
       if(slide!==null)o.frequency.exponentialRampToValueAtTime(midi(slide),start+duration);
       gain.gain.setValueAtTime(.0001,start);
-      gain.gain.exponentialRampToValueAtTime(Math.max(.0002,volume),start+.006);
+      gain.gain.exponentialRampToValueAtTime(Math.max(.0002,volume),start+(type==='fiddle'?.018:type==='reed'?.035:.006));
+      if(type==='reed'||type==='fiddle')gain.gain.setValueAtTime(Math.max(.0002,volume*.8),start+duration*.65);
       gain.gain.exponentialRampToValueAtTime(.0001,start+duration);
-      o.connect(gain);
+      let filter;
+      if(type==='reed'||type==='fiddle'){filter=c.createBiquadFilter();filter.type='lowpass';filter.frequency.value=type==='fiddle'?3200:1900;o.connect(filter);filter.connect(gain);}else o.connect(gain);
       let panner;
       if(c.createStereoPanner) {
         panner=c.createStereoPanner();
@@ -141,6 +166,7 @@
       o.onended=()=> {
         this.nodes.delete(o);
         o.disconnect();
+        if(filter)filter.disconnect();
         gain.disconnect();
         if(panner)panner.disconnect();
       };
@@ -171,39 +197,16 @@
     }
     schedule() {
       if(!this.context||this.paused)return;
-      const c=this.context,theme=THEMES[this.theme]||THEMES.farm,bpm=theme.bpm+(this.lastLap?10:0),eighth=60/bpm/2;
-      // A delayed tab never schedules a backlog of missed music.
+      const c=this.context;
       if(this.next<c.currentTime-.1)this.next=c.currentTime+.02;
       while(this.next<c.currentTime+.12) {
-        const s=this.step,t=this.next,bar=Math.floor(s/8)%8,beat=s%8,rootNote=theme.key+theme.chords[bar];
-        const lead=theme.lead[s%theme.lead.length];
-        if(lead!==null&&this.settings.music>0) {
-          this.tone(theme.key+lead+(s%64>=32&&beat===7?12:0),t,eighth*.86,this.theme==='farm'?'triangle':'square',.11,-.18);
+        const s=this.step,t=this.next;
+        if(this.settings.ambience>0) {
+          if(this.theme==='meadow'&&s%4===0){this.hiss(t,1.1,.17,2200,this.ambient);this.tone(29,t,.18,'triangle',.12,.6,this.ambient,26);}
+          else if(this.theme==='orchard'&&s%24===0)this.hiss(t,.25,.08,4500,this.ambient);
+          if(s%32===0)this.hiss(t,1.5,.12,450,this.ambient);
         }
-        if(this.settings.music>0) {
-          if(beat%2===0)this.tone(rootNote-24+(beat===4?7:0),t,eighth*1.6,'triangle',.3,0);
-          const chord=[0,4,7,12];
-          if(theme.chords[bar]===9||theme.chords[bar]===2)chord[1]=3;
-          this.tone(rootNote+chord[beat%4],t+.008,eighth*.55,'triangle',.11,.3);
-          if(beat===0||beat===4)this.tone(42,t,.11,'sine',.3,0,this.music,26);
-          if(beat===2||beat===6) {
-            this.hiss(t,.095,.35,1200);
-            this.tone(48,t,.07,'triangle',.1);
-          }
-          if(this.theme!=='farm')this.hiss(t,.035,beat%2?.12:.07,5500);
-          if(bar===7&&beat>=6&&this.theme!=='farm')this.hiss(t+eighth/2,.05,.15,1800);
-        }
-        if(this.settings.ambience>0&&s%16===7&&this.theme!=='result'&&this.theme!=='meadow') {
-          this.tone(this.theme==='orchard'?105:94,t,.12,'sine',.12,-.7,this.ambient,this.theme==='orchard'?108:101);
-          this.tone(99,t+.15,.13,'sine',.1,-.65,this.ambient,94);
-        }
-        if(this.settings.ambience>0&&this.theme==='meadow') {
-          if(s%4===0)this.hiss(t,1.2,.16,2200,this.ambient);
-          if(s%2===0)this.tone(31,t,.09,'triangle',.11,.65,this.ambient,28);
-        }
-        if(this.settings.ambience>0&&s%32===0)this.hiss(t,1.5,.15,450,this.ambient);
-        this.next+=eighth;
-        this.step++;
+        this.next+=.25;this.step++;
       }
     }
     play(name) {
@@ -217,6 +220,7 @@
       this.lastSfx[name]=now;
       const n=(note,offset=0,duration=.1,type='square',vol=.22,slide=null)=>this.tone(note,now+offset,duration,type,vol,0,this.sfx,slide);
       switch(name) {
+        case'cross':this.tone(31,now,.6,'sawtooth',.055,.7,this.ambient,44);this.tone(44,now+.6,.8,'sawtooth',.045,.7,this.ambient,28);break;
         case'argument':[48,55,47,58].forEach((p,i)=>n(p,i*.14,.12,'sawtooth',.12));break;
         case'scuffle':for(let i=0;i<4;i++){this.hiss(now+i*.16,.12,.25,700,this.sfx);n(43+i, i*.16,.12,'triangle',.2,32);}break;
         case'crowd':[48,53,50].forEach((p,i)=>n(p,i*.09,.085,'sawtooth',.08));break;
@@ -265,6 +269,8 @@
     }
     destroy() {
       this.pause(true);
+      this.musicSource?.disconnect();
+      if(this.player){this.player.removeAttribute('src');this.player.load();}
       this.context?.close();
     }
   }

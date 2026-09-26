@@ -35,6 +35,48 @@
   },
   "sourceOfTruth": "js/art.js",
   "exportCommand": "node tools/export-assets.cjs",
+  "characters": {
+    "greta": {
+      "name": "Svets-Greta, Byvägens sista hopp",
+      "source": "assets/chicken/greta-equipped.svg",
+      "frameWidth": 32,
+      "frameHeight": 34,
+      "anchor": {
+        "x": 16,
+        "y": 27
+      }
+    },
+    "ragna": {
+      "name": "Raketragge – gasol på avbetalning",
+      "source": "assets/chicken/ragna-equipped.svg",
+      "frameWidth": 32,
+      "frameHeight": 34,
+      "anchor": {
+        "x": 16,
+        "y": 27
+      }
+    },
+    "par": {
+      "name": "Plåt-Pär, kommunens sista 240",
+      "source": "assets/chicken/par-equipped.svg",
+      "frameWidth": 32,
+      "frameHeight": 34,
+      "anchor": {
+        "x": 16,
+        "y": 27
+      }
+    },
+    "agnes": {
+      "name": "Agnes Ägg.exe från kopparskjulet",
+      "source": "assets/chicken/agnes-equipped.svg",
+      "frameWidth": 32,
+      "frameHeight": 34,
+      "anchor": {
+        "x": 16,
+        "y": 27
+      }
+    }
+  },
   "sprites": {
     "playerChicken": {
       "source": "assets/chicken/player-chicken-sheet.svg",
@@ -81,7 +123,14 @@
     "assets/environment/pumpkins.svg",
     "assets/environment/barrels.svg",
     "assets/environment/lantern.svg",
-    "assets/environment/angry-farmer.svg"
+    "assets/environment/angry-farmer.svg",
+    "assets/environment/volvo240.svg",
+    "assets/environment/volvo740.svg",
+    "assets/environment/volvo850.svg",
+    "assets/environment/caravan.svg",
+    "assets/environment/wreckhouse.svg",
+    "assets/environment/bottles.svg",
+    "assets/environment/bushnap.svg"
   ],
   "pickups": [
     "assets/pickups/boost-egg.svg",
@@ -96,18 +145,35 @@
   },
   "audio": {
     "source": "js/audio.js",
-    "originalCompositions": [
-      "farm",
-      "market",
-      "meadow",
-      "orchard",
-      "result"
+    "recordings": [
+      {
+        "title": "Hillbilly Swing",
+        "source": "assets/audio/hillbilly-swing.mp3",
+        "artist": "Kevin MacLeod",
+        "license": "CC BY 4.0"
+      },
+      {
+        "title": "River Valley Breakdown",
+        "source": "assets/audio/river-valley-breakdown.mp3",
+        "artist": "Kevin MacLeod",
+        "license": "CC BY 4.0"
+      },
+      {
+        "title": "Corncob",
+        "source": "assets/audio/corncob.mp3",
+        "artist": "Kevin MacLeod",
+        "license": "CC BY 4.0"
+      },
+      {
+        "title": "Still Pickin",
+        "source": "assets/audio/still-pickin.mp3",
+        "artist": "Kevin MacLeod",
+        "license": "CC BY 4.0"
+      }
     ],
+    "attribution": "assets/audio/ATTRIBUTION.md",
     "channels": [
-      "lead",
-      "bass",
-      "arpeggio",
-      "percussion",
+      "music",
       "ambience",
       "sfx"
     ]

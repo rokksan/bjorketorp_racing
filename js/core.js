@@ -4,30 +4,58 @@
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
   const CHARACTERS = {
     greta: {
-      name:'Gårds-Greta',short:'Greta',tag:'En trygg allroundhöna',speed:72,grip:8,stamina:2.2,color:'cream',perk:'Balanserad fart och kontroll'
+      name:'Svets-Greta, Byvägens sista hopp',short:'Svets-Greta',tag:'Fiber i ladan. Koppartråd i brillorna.',speed:72,grip:8,stamina:2.2,color:'cream',perk:'Balanserad fart och kontroll'
     },
     ragna: {
-      name:'Raket-Ragnhild',short:'Ragnhild',tag:'Snabb, men lite yvig',speed:76,grip:5.5,stamina:1.7,color:'rust',perk:'Högst toppfart, längre svängar'
+      name:'Raketragge – gasol på avbetalning',short:'Raketragge',tag:'Dubbla gasoltuber. Ingen besiktning.',speed:76,grip:5.5,stamina:1.7,color:'rust',perk:'Högst toppfart, längre svängar'
     },
     par: {
-      name:'Pansar-Pär',short:'Pär',tag:'Stadig genom leran',speed:69,grip:10,stamina:2.5,color:'sage',perk:'Halverad tid för hinderpåverkan'
+      name:'Plåt-Pär, kommunens sista 240',short:'Plåt-Pär',tag:'Volvodörr på bröstet. Känslor på insidan.',speed:69,grip:10,stamina:2.5,color:'sage',perk:'Halverad tid för hinderpåverkan'
     },
     agnes: {
-      name:'Ägg-Agnes',short:'Agnes',tag:'Ett ess under vingen',speed:71,grip:8,stamina:2.2,color:'lilac',perk:'Startar varje lopp med ett fartägg'
+      name:'Agnes Ägg.exe från kopparskjulet',short:'Ägg.exe',tag:'Hackar äggautomaten bakom bygdegården.',speed:71,grip:8,stamina:2.2,color:'lilac',perk:'Startar med Motorsprit i äggkopp'
     }
   };
   const TRACKS = [
   {
-    id:'market',name:'Björketorp marknad',short:'Marknadsrundan',subtitle:'Där varje höna börjar',description:'En generös första bana runt gården. Breda kurvor och gott om plats för omkörning.',unlock:0,theme:'spring',width:22,par:53,points:[[108,232],[55,188],[54,91],[112,53],[280,50],[410,79],[430,177],[371,238],[230,247]],obstacles:[.22,.65],music:'market'
+    id:'market',name:'Björketorps konkursmarknad',short:'Konkursmarknaden',subtitle:'Där varje höna börjar',description:'En generös första bana runt gården. Breda kurvor och gott om plats för omkörning.',unlock:0,theme:'spring',width:22,par:53,points:[[108,232],[55,188],[54,91],[112,53],[280,50],[410,79],[430,177],[371,238],[230,247]],obstacles:[.22,.65],music:'market'
   },
   {
-    id:'meadow',name:'Kladdis leriga långrunda',short:'Leriga långrundan',subtitle:'Regn, traktorer och en rejäl hårnål',description:'Långa åkerrakor och en dubbel återvändare. Spurta på torr mark, välj insidan runt leran.',unlock:2,theme:'rain',width:17,par:65,points:[[100,260],[50,210],[50,60],[110,35],[390,35],[435,70],[395,105],[180,105],[135,145],[185,205],[395,205],[435,245],[390,275],[230,275]],obstacles:[.15,.35,.55,.73,.88],music:'meadow'
+    id:'meadow',name:'Kladdis kommunala lerhelvete',short:'Kommunala lerhelvetet',subtitle:'Regn, traktorer och en rejäl hårnål',description:'Långa åkerrakor och en dubbel återvändare. Spurta på torr mark, välj insidan runt leran.',unlock:2,theme:'rain',width:17,par:65,points:[[100,260],[50,210],[50,60],[110,35],[390,35],[435,70],[395,105],[180,105],[135,145],[185,205],[395,205],[435,245],[390,275],[230,275]],obstacles:[.15,.35,.55,.73,.88],music:'meadow'
   },
   {
-    id:'orchard',name:'Callheims nattliga skördefest',short:'Nattliga skördefesten',subtitle:'Lyktor, träbro och fest i logen',description:'En slingrig nattbana med S-kurvor, smal träbro och bred omkörning genom festlogen.',unlock:5,theme:'night',width:19,par:62,points:[[98,247],[48,198],[56,116],[106,58],[177,54],[214,109],[272,109],[309,52],[391,60],[428,116],[397,167],[329,180],[316,234],[241,254],[178,215]],obstacles:[.18,.42,.83],music:'orchard',bridge:[.55,.62],hall:.88
+    id:'orchard',name:'Callheims sista dans före utmätning',short:'Dans före utmätning',subtitle:'Lyktor, träbro och fest i logen',description:'En slingrig nattbana med S-kurvor, smal träbro och bred omkörning genom festlogen.',unlock:5,theme:'night',width:19,par:62,points:[[98,247],[48,198],[56,116],[106,58],[177,54],[214,109],[272,109],[309,52],[391,60],[428,116],[397,167],[329,180],[316,234],[241,254],[178,215]],obstacles:[.18,.42,.83],music:'orchard',bridge:[.55,.62],hall:.88
   }
   ];
+  const RIVALS=[
+    {name:'Besiktnings-Börje',speed:.98,lane:.5,quip:'Den där är fan inte original.'},
+    {name:'Pant-Pirjo',speed:1.01,lane:1.2,quip:'Flytta på dig. Panten stänger fem.'},
+    {name:'Bygdekungen Ronny',speed:1.035,lane:.8,quip:'Jag äger den här grusvägen!'},
+    {name:'Släpvagns-Siv',speed:.99,lane:1.4,quip:'Bromsar säljs separat, för helvete.'}
+  ];
+  const BUILDS={
+    stock:{name:'Besiktigad av morsan',description:'Standardbygge. Inga extra nackdelar.',speed:1,grip:1,stamina:0,recovery:1,armor:1,unlock:0},
+    chip:{name:'Svågerns fulchip',description:'+8 % fart, −25 % styrgrepp. Inga kvitton.',speed:1.08,grip:.75,stamina:0,recovery:1,armor:1,unlock:0},
+    armor:{name:'Hemsvetsat kommunalpansar',description:'Halverad hinderpåverkan, −6 % fart.',speed:.94,grip:1,stamina:0,recovery:1,armor:.5,unlock:2},
+    gas:{name:'Gasol från dödsbo',description:'+1,5 s spurt, 35 % långsammare återhämtning.',speed:1,grip:1,stamina:1.5,recovery:.65,armor:1,unlock:5}
+  };
   const CROWD_DIALOGUE = [
+  {speaker:0,target:1,text:'Kommunen drog in bussen. Vi kör hönor nu.'},
+  {speaker:1,target:0,text:'Min pension sitter i en gasoltub på den där fågeln.'},
+  {speaker:2,target:3,text:'Det är inte fylla. Det är flytande krisberedskap.'},
+  {speaker:3,target:2,text:'Bygdegården har konkurs. Baren tar fortfarande pant.'},
+  {speaker:4,target:0,text:'EU-bidrag till rakethöns! Äntligen landsbygdspolitik.'},
+  {speaker:0,target:4,text:'Vem kopplade hembrännaren till kommunens laddstolpe?!'},
+  {speaker:1,target:2,text:'Kladdis lovade bredband. Vi fick en bred dunk.'},
+  {speaker:2,target:1,text:'Här finns framtidstro. Den står bakom pannan.'},
+  {speaker:0,target:1,text:'Fiber till ladan. Fortfarande ingen täckning på dass.'},
+  {speaker:1,target:0,text:'Kladdis kör på Nutella. Raketen går på ren envishet.'},
+  {speaker:2,target:3,text:'Neon under traktorn! Nu är vi fan en storstad.'},
+  {speaker:3,target:2,text:'Storstad? Bussen går ju fortfarande på torsdag.'},
+  {speaker:4,target:0,text:'Den där hönan är chippad av min svåger. Inga kvitton.'},
+  {speaker:0,target:4,text:'Björketorp 2077. Samma potthål, dyrare reservdelar.'},
+  {speaker:1,target:2,text:'Rör inte min laddkabel! Den håller uppe lagårn!'},
+  {speaker:2,target:1,text:'Kladdis hackade mjölkroboten. Nu gör den Irish coffee.'},
   { speaker: 0, target: 1, text: "Såg du Kladdis gamla rekord? 0:42!" },
   { speaker: 1, target: 0, text: "Emil är en gud. Ingen annan når hans nivå!" },
   { speaker: 2, target: 3, text: "Jag hörde att han åt Nutella med högaffel." },
@@ -52,32 +80,32 @@
   ];
   const UPGRADES = {
     feed: {
-      name:'Kraftfoder',description:'+3 % toppfart per nivå',cost:[90,220,450],max:3
+      name:'Dieselmüsli 98',description:'Frukost ur reservdunken. +3 % toppfart per nivå',tiers:['Lantmännens restlager','Reservdunk Special','Röddiesel à la svåger'],cost:[90,220,450],max:3
     },
     boots: {
-      name:'Springdojor',description:'Kvickare svängar, bättre grepp på gräs',cost:[75,180,360],max:3
+      name:'Kronofogdens flyktstövlar',description:'Fogden får ta bussen. Kvickare svängar och bättre grepp på gräs',tiers:['Tejpade gummistövlar','Servon från skrot-Volvon','Utmätningsturbo 3000'],cost:[75,180,360],max:3
     },
     nest: {
-      name:'Vilobo',description:'+0,4 s spurt och snabbare återhämtning',cost:[85,200,400],max:3
+      name:'Bakfyllebo med starthjälp',description:'Sov bakom pannan. +0,4 s spurt per nivå och snabbare återhämtning',tiers:['Madrass från grovsopen','Värmefilt på tjuvström','Kommunal återställarstation'],cost:[85,200,400],max:3
     }
   };
   const CONTRACTS = [
   {
-    id:'races',name:'Bli varm i fjädrarna',description:'Kör klart 3 lopp',target:3,reward:45
+    id:'races',name:'Arbetslinjen runt lagårn',description:'Kör klart 3 lopp',target:3,reward:45
   },
   {
-    id:'corn',name:'Ladans lilla samlare',description:'Samla 24 majskorn',target:24,reward:55
+    id:'corn',name:'Pantjakten före löning',description:'Samla 24 majskorn',target:24,reward:55
   },
   {
-    id:'items',name:'Ett ägg i rockärmen',description:'Använd 6 föremål',target:6,reward:50
+    id:'items',name:'Svågerns tveksamma sidoinkomst',description:'Använd 6 föremål',target:6,reward:50
   },
   {
-    id:'wins',name:'Gårdens stolthet',description:'Vinn 2 lopp',target:2,reward:75
+    id:'wins',name:'Bygdens minst misslyckade',description:'Vinn 2 lopp',target:2,reward:75
   }
   ];
   function freshSave() {
     return {
-      version:2,courseRevision:2,coins:0,xp:0,races:0,wins:0,corn:0,items:0,upgrades: {
+      build:'stock',cup:{stage:0,titles:0},rivalWins:[0,0,0,0],version:2,courseRevision:2,coins:0,xp:0,races:0,wins:0,corn:0,items:0,upgrades: {
         feed:0,boots:0,nest:0
       },medals: {
       },records: {
@@ -95,6 +123,9 @@
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return s;
     const integer = (n, max=999999) => Number.isFinite(n) ? clamp(Math.floor(n),0,max) : 0;
     for (const key of ['coins','xp','races','wins','corn','items']) s[key]=integer(raw[key]);
+    s.cup={stage:integer(raw.cup?.stage,2),titles:integer(raw.cup?.titles,9999)};
+    s.rivalWins=RIVALS.map((_,i)=>integer(raw.rivalWins?.[i]));
+    if(BUILDS[raw.build]&&BUILDS[raw.build].unlock<=s.races)s.build=raw.build;
     for (const key of Object.keys(UPGRADES)) s.upgrades[key]=integer(raw.upgrades?.[key],3);
     for (const t of TRACKS) for(const d of ['easy','normal','hard']) s.medals[`${t.id}:${d}`]=integer(raw.medals?.[`${t.id}:${d}`],3);
     for(const t of TRACKS) for(const mode of ['race','trial']) for(const d of ['easy','normal','hard']) {
@@ -233,6 +264,11 @@
   function updateCrowd(r,dt) {
     r.crowdSpeechTime=Math.max(0,r.crowdSpeechTime-dt);
     r.crowdTalk-=dt;
+    if(r.crowdTalk<=0&&r.crowdSpeechTime<=0&&r.crowd.length) {
+      r.crowdSpeaker=r.crowdLine%r.crowd.length;
+      r.crowdSpeech=['VEM FAN HAR MIN DUNK?','DIN VOLVO LÄCKER IGEN!','DET ÄR ROSTSKYDD, IDIOT!','49! GE FAN I GRÄSMATTAN!','PANTEN ÄR MIN, FÖR HELVETE!','HÅLL KÄFT OCH HÅLL MIN ÖL!'][r.crowdLine%6];
+      r.crowdLine++;r.crowdSpeechTime=5.5;r.crowdTalk=7;
+    }
     for(const farmer of r.crowd) {
       farmer.windup=Math.max(0,farmer.windup-dt);
       farmer.moodTime=Math.max(0,farmer.moodTime-dt);
@@ -244,20 +280,17 @@
       if(host) {
         const mate=r.crowd[host.partner];
         host.mood=mate.mood='argue';host.moodTime=mate.moodTime=6;
+        if(r.crowdSpeechTime<=0) {
         r.crowdSpeaker=host.id;
-        r.crowdSpeech=['VEM TOG MIN FLASKA?! Kladdis såg allt!','Rör inte min stövel, din ladugårdstomte!','Emil kör bättre än du går, Bulten!'][r.brawlIndex%3];
-        r.crowdSpeechTime=5.5;r.crowdTalk=6;r.events.push('argument');r.brawlIndex++;
+        r.crowdSpeech=['VEM FAN TOG MIN FLASKA?!','GE FAN I MIN VOLVO!','DIN JÄVLA PANTTJUV!'][r.brawlIndex%3];
+        r.crowdSpeechTime=5.5;r.crowdTalk=7;
+        }
+        r.events.push('argument');r.brawlIndex++;
       }
-      r.brawlTimer=13;
+      r.brawlTimer=8;
     }
     for(const farmer of r.crowd)if(farmer.mood==='argue'&&farmer.moodTime<3.5) {
       farmer.mood='brawl';if(farmer.partner>farmer.id)r.events.push('scuffle');
-    }
-    if(r.crowdTalk<=0&&r.crowd.length) {
-      const line=CROWD_DIALOGUE[r.crowdLine%CROWD_DIALOGUE.length];
-      r.crowdSpeaker=line.speaker%r.crowd.length;
-      r.crowdSpeech=line.text;r.crowdSpeechTime=6.5;r.crowdTalk=7;r.crowdLine++;
-      r.events.push('crowd');
     }
     if(r.options.mode==='trial')return;
     r.crowdThrow-=dt;
@@ -274,15 +307,44 @@
       const before=shot.age;shot.age+=dt;
       if(before<shot.duration&&shot.age>=shot.duration) {
         r.events.push(shot.kind==='bottle'?'bottle':'bump');
+        if(shot.kind==='bottle')r.puddles.push({x:shot.x,y:shot.y,kind:'glass',radius:7,life:4});
         for(const actor of r.actors) {
           if(actor.finishTime!==null||actor.cooldown>0||Math.hypot(actor.x-shot.x,actor.y-shot.y)>shot.radius+4)continue;
           if(actor.shield>0) {actor.shield=0;if(actor.id===0)notify(r,'shield','Skölden stoppade bondens kast!');}
-          else {actor.slow=r.options.chicken==='par'&&actor.id===0?.55:1.1;if(actor.id===0){r.bumps++;notify(r,'bump','Publiken träffade! Se upp för de röda ringarna.');}}
+          else {actor.slow=actor.id===0?(r.options.chicken==='par'?.55:1.1)*r.build.armor:1.1;if(actor.id===0){r.bumps++;notify(r,'bump','Publiken träffade! Se upp för de röda ringarna.');}}
           actor.cooldown=1.5;
         }
       }
     }
     r.projectiles=r.projectiles.filter(p=>p.age<p.duration+.45);
+  }
+  function updateCross(r,dt) {
+    const bike=r.cross,phase=r.time%18;
+    const next=phase<9?'ride':phase<11?'warning':phase<14?'burn':'ride';
+    if(next!==bike.state&&next==='warning')r.events.push('cross');
+    bike.state=next;
+    if(next==='ride')bike.along+=dt*112;
+    const excursion=Math.sin(Math.PI*clamp((phase-1)/7,0,1));
+    const lane=next==='ride'?Math.sin(bike.along/105)*(8+excursion*48):bike.lane;
+    bike.lane=lane;
+    Object.assign(bike,pointAt(r.track,bike.along,lane));
+    bike.x=clamp(bike.x,18,462);bike.y=clamp(bike.y,28,282);
+    bike.heckleCooldown=Math.max(0,(bike.heckleCooldown||0)-dt);
+    const angry=r.crowd.find(p=>Math.hypot(p.x-bike.x,p.y-bike.y)<48);
+    if(angry&&bike.heckleCooldown===0) {
+      angry.mood='argue';angry.moodTime=3;angry.windup=1;
+      if(r.crowdSpeechTime<=0){r.crowdSpeaker=angry.id;r.crowdSpeech=['49! GE FAN I MIN TOMT!','MINA POTATISAR, DIN JÄVEL!','KÖR PÅ VÄGEN FÖR FAN!'][bike.splashes%3];r.crowdSpeechTime=5.5;r.crowdTalk=7;}
+      bike.heckleCooldown=6;r.events.push('argument');
+    }
+    bike.spray-=dt;
+    if(next==='burn'&&bike.spray<=0) {
+      bike.spray=.24;
+      if(r.options.mode!=='trial') {
+        const splash=pointAt(r.track,bike.along-10-(bike.splashes%3)*4,bike.lane);
+        r.puddles.push({...splash,kind:'mud',radius:5,life:2.2});
+      }
+      bike.splashes++;
+    }
   }
   function makeRace(options,save) {
     options= {
@@ -299,22 +361,23 @@
     : {
       ...save.upgrades
     };
+    const build=BUILDS[!trial&&BUILDS[save.build]?.unlock<=save.races?save.build:'stock'];
     const count=trial?1:5;
     const actors=Array.from( {
       length:count
     },(_,i)=> {
       const pos=pointAt(track,-18-Math.floor(i/2)*14,(i%2?1:-1)*7);
       return {
-        ...pos,id:i,name:i?['','Agda','Berta','Cilla','Doris'][i]:c.short,color:i?['','rust','sage','lilac','brown'][i]:c.color,vx:0,vy:0,speed:0,along:track.length-18-Math.floor(i/2)*14,lastAlong:track.length-18-Math.floor(i/2)*14,travel:0,startDistance:18+Math.floor(i/2)*14,progress:0,checkpoint:0,lap:0,lapStart:0,laps:[],finishTime:null,slow:0,boost:0,shield:0,item:!i&&options.chicken==='agnes'&&!trial?'boost':null,cooldown:0,stamina:c.stamina+up.nest*.4,aiLane:(i%2?1:-1)*(5+i),aiSpeed:( {
+        ...pos,id:i,name:i?RIVALS[i-1].name:c.short,color:i?['','rust','sage','lilac','brown'][i]:c.color,vx:0,vy:0,speed:0,along:track.length-18-Math.floor(i/2)*14,lastAlong:track.length-18-Math.floor(i/2)*14,travel:0,startDistance:18+Math.floor(i/2)*14,progress:0,checkpoint:0,lap:0,lapStart:0,laps:[],finishTime:null,slow:0,boost:0,shield:0,item:!i&&options.chicken==='agnes'&&!trial?'boost':null,cooldown:0,stamina:c.stamina+up.nest*.4+build.stamina,aiLane:(i%2?1:-1)*(5+i),aiSpeed:( {
           easy:62,normal:77,hard:87
         }
-        [options.difficulty]||56)*(1-i*.009)
+        [options.difficulty]||56)*(i?RIVALS[i-1].speed:1)
       };
     });
     return {
       track,options: {
         ...options
-      },character:c,up,actors,time:0,countdown:3,phase:'countdown',countBeat:4,events:[],corn:0,usedItems:0,bumps:0,particles:[],feedback:'Följ pilarna. Tre varv till mål!',feedbackTime:3,lastLap:false,settled:false,result:null,
+      },character:c,build,up,actors,time:0,countdown:3,phase:'countdown',countBeat:4,events:[],corn:0,usedItems:0,bumps:0,particles:[],feedback:trial?'Följ pilarna. Tre varv till mål!':`${RIVALS[save.races%4].name}: ${save.rivalWins?.[save.races%4]>0?'Nu jävlar blir det revansch!':RIVALS[save.races%4].quip}`,feedbackTime:3,lastLap:false,settled:false,result:null,
       ghost:trial?(save.ghosts?.[track.id]||null):null,
       trace:trial?[[0,actors[0].x,actors[0].y,actors[0].angle]]:[],traceNext:.2,
       pickups:Array.from( {
@@ -323,22 +386,25 @@
         ...pointAt(track,track.length*(i+.35)/4, i%2?7:-7),kind:['boost','shield','mud','boost'][i],collectedLap:-1
       })),
       cornPoints:Array.from( {
-        length:18
+        length:6
       },(_,i)=>( {
-        ...pointAt(track,track.length*(i+.5)/18,(i%3-1)*7),collectedLap:-1
+        ...pointAt(track,track.length*(i+.5)/6,(i%3-1)*7),collectedLap:-1
       })),
       obstacles:def.obstacles.map((f,i)=>( {
         ...pointAt(track,track.length*f,(i%2?1:-1)*(def.width-7)),kind:def.theme==='rain'?'mud':i%2?'mud':'hay',radius:def.theme==='rain'?9:6
       })),
-      crowd:makeCrowd(track),crowdLine:(save.races*7+TRACKS.indexOf(def)*4)%CROWD_DIALOGUE.length,crowdTalk:.1,brawlTimer:9,brawlIndex:0,crowdSpeech:'',crowdSpeechTime:0,crowdSpeaker:0,crowdThrow:2.5,throwIndex:0,projectiles:[],
-      puddles:[],maxStamina:c.stamina+up.nest*.4,footTimer:0
+      crowd:makeCrowd(track),crowdLine:(save.races*7+TRACKS.indexOf(def)*4)%CROWD_DIALOGUE.length,crowdTalk:.1,brawlTimer:4,brawlIndex:0,crowdSpeech:'',crowdSpeechTime:0,crowdSpeaker:0,crowdThrow:2.5,throwIndex:0,projectiles:[],
+      cross:{...pointAt(track,track.length*.38,8),along:track.length*.38,lane:8,state:'ride',spray:0,splashes:0},
+      puddles:[],maxStamina:c.stamina+up.nest*.4+build.stamina,footTimer:0
     };
   }
   function notify(r,type,text) {
     r.events.push(type);
     if(text) {
+      if(r.feedbackTime>0&&!['go','lap','finish','wrongway'].includes(type)){if(text!==r.feedback)r.pendingFeedback=text;return;}
       r.feedback=text;
-      r.feedbackTime=2.3;
+      r.pendingFeedback=null;
+      r.feedbackTime=5;
     }
   }
   function useItem(r) {
@@ -349,11 +415,11 @@
     r.usedItems++;
     if(type==='boost') {
       p.boost=2;
-      notify(r,'boost','Fartägg! Full fart framåt.');
+      notify(r,'boost','Motorsprit i äggkopp! Full fart framåt.');
     }
     if(type==='shield') {
       p.shield=8;
-      notify(r,'shield','Äggsköld! Skydd i åtta sekunder.');
+      notify(r,'shield','Volvodörr från skroten! Skydd i åtta sekunder.');
     }
     if(type==='mud') {
       const target=r.actors.slice(1).filter(a=>a.finishTime===null&&Math.hypot(a.x-p.x,a.y-p.y)<90).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0];
@@ -361,7 +427,7 @@
       else r.puddles.push( {
         ...pointAt(r.track,p.along-14),life:8,radius:9,kind:'mud'
       });
-      notify(r,'mud',target?`${target.name} fick lera i fjädrarna!`:'Lerbomb lagd bakom dig.');
+      notify(r,'mud',target?`${target.name} fick lera i fjädrarna!`:'Kommunalt slamskott lagd bakom dig.');
     }
     return true;
   }
@@ -417,7 +483,9 @@
       return;
     }
     r.time+=dt;
+    updateCross(r,dt);
     r.feedbackTime=Math.max(0,r.feedbackTime-dt);
+    if(r.feedbackTime===0&&r.pendingFeedback){r.feedback=r.pendingFeedback;r.pendingFeedback=null;r.feedbackTime=5;}
     if(input.item)useItem(r);
     r.puddles.forEach(p=>p.life-=dt);
     r.puddles=r.puddles.filter(p=>p.life>0);
@@ -428,13 +496,13 @@
       a.boost=Math.max(0,a.boost-dt);
       a.shield=Math.max(0,a.shield-dt);
       a.cooldown=Math.max(0,a.cooldown-dt);
-      let dx=0,dy=0,base=isPlayer?r.character.speed*(1+r.up.feed*.03):a.aiSpeed;
+      let dx=0,dy=0,base=isPlayer?r.character.speed*(1+r.up.feed*.03)*r.build.speed:a.aiSpeed;
       if(isPlayer) {
         dx=input.x||0;
         dy=input.y||0;
       }
       else {
-        const target=pointAt(r.track,a.along+18,a.aiLane*Math.sin(a.along/110+a.id));
+        const target=pointAt(r.track,a.along+18,a.aiLane*RIVALS[a.id-1].lane*Math.sin(a.along/110+a.id));
         dx=target.x-a.x;
         dy=target.y-a.y;
         // Telegraph an occasional AI dash; no teleporting or rubber-band speed boosts.
@@ -449,14 +517,22 @@
       a.sprinting=sprint;
       if(isPlayer) {
         const recovering=!input.sprint||len===0||a.boost>0||a.slow>0;
-        a.stamina=clamp(a.stamina+dt*(sprint?-1:recovering?.5+r.up.nest*.07:0),0,r.maxStamina);
+        a.stamina=clamp(a.stamina+dt*(sprint?-1:recovering?(.5+r.up.nest*.07)*r.build.recovery:0),0,r.maxStamina);
         if(a.stamina===0&&!a.exhausted)notify(r,'tired','Spurten är slut. Släpp spurtknappen för att vila.');
         a.exhausted=a.stamina===0;
       }
       const offroad=road.distance>roadWidth(r.track,road.along)-2;
-      const factor=a.slow>0?.48:a.boost>0?1.5:sprint?1.32:1;
+      a.cornerBoost=Math.max(0,(a.cornerBoost||0)-dt);
+      if(isPlayer) {
+        const alignment=a.speed>1?(a.vx*dx+a.vy*dy)/a.speed:1;
+        const sliding=!offroad&&len>0&&a.speed>base*.65&&alignment>.15&&alignment<.88&&a.slow===0;
+        a.drifting=sliding;
+        a.driftCharge=sliding?Math.min(.8,(a.driftCharge||0)+dt):a.driftCharge||0;
+        if(!sliding){if(a.driftCharge>.18&&alignment>.94&&!offroad&&len>0&&a.slow===0){a.cornerBoost=.45;notify(r,'boost','Snygg sväng! Gratis skjuts från svågern.');a.driftCharge=0;}else if(offroad||!len||a.slow>0)a.driftCharge=0;else a.driftCharge=Math.max(0,a.driftCharge-dt*.3);}
+      }
+      const factor=a.slow>0?.48:a.boost>0?1.5:sprint?1.32:a.cornerBoost>0?1.12:1;
       const desired=base*factor*(offroad?(isPlayer?.53+r.up.boots*.065:.6):1)*(len>0?1:0);
-      const grip=isPlayer?r.character.grip+r.up.boots*1.8:8,blend=1-Math.exp(-grip*dt);
+      const grip=isPlayer?(r.character.grip+r.up.boots*1.8)*r.build.grip:8,blend=1-Math.exp(-grip*dt);
       a.vx+=(dx*desired-a.vx)*blend;
       a.vy+=(dy*desired-a.vy)*blend;
       a.x=clamp(a.x+a.vx*dt,10,470);
@@ -471,16 +547,16 @@
         a.x=after.x+(a.x-after.x)*k;
         a.y=after.y+(a.y-after.y)*k;
       }
-      for(const o of [...r.obstacles,...r.puddles]) if(Math.hypot(a.x-o.x,a.y-o.y)<o.radius+4&&a.cooldown===0) {
+      for(const o of [...r.obstacles,...r.puddles,...(r.options.mode!=='trial'&&r.cross.state==='burn'?[{...r.cross,kind:'mud',radius:7}]:[])]) if(Math.hypot(a.x-o.x,a.y-o.y)<o.radius+4&&a.cooldown===0) {
         if(a.shield>0) {
           a.shield=0;
           if(isPlayer)notify(r,'shield','Skölden tog smällen!');
         }
         else {
-          a.slow=(isPlayer&&r.options.chicken==='par')?.45:.9;
+          a.slow=((isPlayer&&r.options.chicken==='par')?.45:.9)*(isPlayer?r.build.armor:1);
           if(isPlayer) {
             r.bumps++;
-            notify(r,'bump',o.kind==='hay'?'Höbal! Ta en lite vidare kurva.':'Lera! Håll dig på den ljusa stigen.');
+            notify(r,'bump',o.kind==='hay'?'Höbal! Ta en lite vidare kurva.':o.kind==='glass'?'Glassplitter! Runda den gröna fläcken.':'Lera! Håll dig på den ljusa stigen.');
           }
         }
         a.cooldown=1.4;
@@ -527,7 +603,7 @@
   function finishResult(r) {
     const p=r.actors[0],position=ranking(r).findIndex(a=>a.id===0)+1;
     return {
-      position,time:r.time,bestLap:Math.min(...p.laps),corn:r.corn,items:r.usedItems,clean:r.bumps===0,coins:r.options.mode==='trial'?0:([0,45,34,27,21,18][position]+r.corn*2+(r.bumps===0?10:0)+( {
+      position,time:r.time,bestLap:Math.min(...p.laps),corn:r.corn,items:r.usedItems,clean:r.bumps===0,coins:r.options.mode==='trial'?0:([0,45,34,27,21,18][position]+r.corn*6+(r.bumps===0?10:0)+( {
         easy:0,normal:8,hard:16
       }
       [r.options.difficulty]||0)),medal:position<=3?4-position:0
@@ -547,6 +623,13 @@
       else delete save.ghosts[r.track.id];
     }
     if(!trial) {
+      const order=ranking(r);
+      for(let i=0;i<4;i++)if(order.findIndex(a=>a.id===0)<order.findIndex(a=>a.id===i+1))save.rivalWins[i]++;
+      if(r.track.id===TRACKS[save.cup.stage].id&&result.position<=3) {
+        save.cup.stage++;
+        result.cupMessage='Pallplats säkrad! Nästa cupetapp: '+(TRACKS[save.cup.stage]?.short||'mästerskapet avgjort');
+        if(save.cup.stage===3){save.cup.stage=0;save.cup.titles++;result.coins+=150;result.cupMessage='Kommunmästare! +150 mynt och en svetsad pokal på gården. Ny cup väntar.';}
+      }
       save.coins+=result.coins;
       save.xp+=25+(result.position===1?20:0)+r.corn;
       save.races++;
@@ -570,7 +653,7 @@
     return {x:a[1]+(b[1]-a[1])*f,y:a[2]+(b[2]-a[2])*f,angle:b[3]};
   }
   const api= {
-    roadWidth,CROWD_DIALOGUE,makeCrowd,CHARACTERS,TRACKS,UPGRADES,CONTRACTS,clamp,freshSave,sanitizeSave,buyUpgrade,claimContract,buildTrack,pointAt,project,rectangleClear,makeRace,tick,ranking,useItem,settleRace,finishResult,formatTime,ghostAt
+    updateCross,BUILDS,RIVALS,roadWidth,CROWD_DIALOGUE,makeCrowd,CHARACTERS,TRACKS,UPGRADES,CONTRACTS,clamp,freshSave,sanitizeSave,buyUpgrade,claimContract,buildTrack,pointAt,project,rectangleClear,makeRace,tick,ranking,useItem,settleRace,finishResult,formatTime,ghostAt
   };
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
   else root.FarmRace=api;

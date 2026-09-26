@@ -1256,3 +1256,18 @@
 .crowd-caption { min-height: 3.7em; display:flex; align-items:center; border:3px solid #65472f; border-left:8px solid #b64d36; background:#fff0c5; color:#412d27; font:700 clamp(14px,1.45vw,18px)/1.4 monospace; padding:8px 12px; box-shadow:inset 0 -3px #dfbc79; }
 #race-screen { max-width:min(100%,calc((100dvh - 270px)*1.6)); }
 @media(max-width:600px) { #race-screen {max-width:100%;} .crowd-caption {font-size:14px; min-height:5em;} }
+
+/* A speech bubble dock remains available when there is no safe infield space. */
+.crowd-caption { position:relative; border:3px solid #49404c; border-radius:12px 12px 12px 2px; box-shadow:3px 3px 0 #74664f; margin-bottom:9px; }
+.crowd-caption::after { content:''; position:absolute; bottom:-10px; left:22px; width:14px; height:14px; background:#fff0c5; border-right:3px solid #49404c; border-bottom:3px solid #49404c; transform:skewY(35deg); }
+.crowd-caption.speech-in-world { background:#e9dfc4; color:#6a574b; border-color:transparent; box-shadow:none; font-size:13px; letter-spacing:.06em; justify-content:center; pointer-events:none; }
+.crowd-caption.speech-in-world::after { display:none; }
+.chicken-card canvas { filter:drop-shadow(0 2px 0 #4c514a30); }
+.chicken-card.selected { box-shadow:inset 0 -3px #71cdb4; }
+
+/* Quiet captions: no tails or leader lines across the race. */
+.crowd-caption::after { display:none; }
+
+/* No crowd dialogue element participates in race layout. */
+#race-screen { max-width:min(100%,calc((100dvh - 190px)*1.6)); }
+@media(max-width:600px) { #race-screen {max-width:100%;} }

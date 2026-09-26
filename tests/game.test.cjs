@@ -71,7 +71,7 @@ test('Parking on corn or an egg cannot generate repeated rewards within a lap',(
  const r=C.makeRace({track:'market',chicken:'greta',mode:'race',difficulty:'easy'},C.freshSave());r.countdown=0;r.phase='racing';
  const p=r.actors[0],corn=r.cornPoints[0];p.x=corn.x;p.y=corn.y;C.tick(r,{},1/120);const earned=r.corn;
  for(let i=0;i<1500;i++)C.tick(r,{},1/120);assert.equal(r.corn,earned);
- const egg=r.pickups[0];p.x=egg.x;p.y=egg.y;p.item=null;C.tick(r,{},1/120);assert.ok(p.item);C.useItem(r);
+ const egg=r.pickups.find(e=>e.collectedLap<p.lap);p.x=egg.x;p.y=egg.y;p.item=null;C.tick(r,{},1/120);assert.ok(p.item);C.useItem(r);
  for(let i=0;i<1200;i++)C.tick(r,{},1/120);assert.equal(p.item,null);
 });
 test('A personal-best time trial records a persistent interpolated ghost without collisions',()=>{
@@ -85,7 +85,7 @@ test('Farmers stand clear of every track and throws are telegraphed, finite and 
  for(const def of C.TRACKS){const t=C.buildTrack(def),crowd=C.makeCrowd(t);assert.ok(crowd.length>=5);for(const p of crowd)assert.ok(C.rectangleClear(t,p.x-8,p.y-21,16,23,0));}
  const r=C.makeRace({track:'market',mode:'race',difficulty:'easy'},C.freshSave());r.countdown=0;r.phase='racing';
  for(let i=0;i<310;i++)C.tick(r,{},1/120);
- assert.equal(r.projectiles.length,1);assert.ok(r.projectiles[0].age<.2);assert.ok(r.crowdSpeech.includes('Kladdis'));
+ assert.equal(r.projectiles.length,1);assert.ok(r.projectiles[0].age<.2);assert.ok(r.crowdSpeech.length>0);
  const age=r.projectiles[0].age;r.phase='paused';C.tick(r,{},1);assert.equal(r.projectiles[0].age,age);
  r.phase='racing';for(let i=0;i<240;i++)C.tick(r,{},1/120);assert.equal(r.projectiles.length,0);
 });
@@ -94,7 +94,7 @@ test('Crowd hits slow chickens, shields absorb hits, and trials have no projecti
  const p=r.actors[0];p.shield=shield;r.projectiles=[{x:p.x,y:p.y,sx:0,sy:0,age:1.29,duration:1.3,radius:10,kind:'bottle'}];C.tick(r,{},.02);
  assert.equal(r.bumps,shield?0:1);assert.equal(p.shield,0);assert.equal(p.slow>0,!shield);
  }
- const trial=runRace({mode:'trial'});assert.equal(trial.projectiles.length,0);assert.equal(trial.throwIndex,0);assert.ok(trial.crowdLine>0);
+ const trial=runRace({mode:'trial'});assert.equal(trial.projectiles.length,0);assert.equal(trial.throwIndex,0);assert.equal(trial.puddles.length,0);
 });
 test('Each new course has a distinct theme, landmarks and safe paired crowd scuffles',()=>{
  const artContext={window:{FarmRace:C}};vm.createContext(artContext);vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/art.js'),'utf8'),artContext);
@@ -102,6 +102,7 @@ test('Each new course has a distinct theme, landmarks and safe paired crowd scuf
    assert.ok(r.crowd.some(p=>p.partner>p.id),def.id+' has a pair');
    for(const p of r.crowd)assert.ok(C.rectangleClear(r.track,p.x-14,p.y-33,32,43,0),def.id+' farmer clearance');
    const scene=artContext.window.FarmArt.makeScene(r.track),types=scene.map(p=>p.type);
+   for(const type of ['bushnap','bottles'])assert.ok(types.includes(type),def.id+' '+type);
    if(def.id==='meadow')for(const type of ['tractor','shed','ditch'])assert.ok(types.includes(type),type);
    if(def.id==='orchard')for(const type of ['barn','pumpkins','lantern'])assert.ok(types.includes(type),type);
    r.phase='racing';r.countdown=0;r.brawlTimer=.01;C.tick(r,{},.02);assert.ok(r.crowd.some(p=>p.mood==='argue'));assert.ok(r.crowdSpeech.includes('FLASKA'));
@@ -116,4 +117,64 @@ test('Course redesign migrates economy but retires incompatible old times and gh
  for(const id of ['market','meadow','orchard']){old.records[id+':race:easy']={time:42,lap:14};old.ghosts[id]=[[0,100,100,0],[1,110,110,0]];}
  const next=C.sanitizeSave(old);assert.equal(next.coins,345);assert.equal(next.races,8);assert.equal(next.upgrades.feed,2);assert.ok(next.records['market:race:easy']);assert.equal(next.records['meadow:race:easy'],undefined);assert.equal(next.ghosts.orchard,undefined);
 });
+test('Crowd captions cannot move the playfield and scrap cars stay off every course',()=>{
+ const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');assert.ok(!html.includes('id="crowd-caption"'));
+ const sandbox={window:{FarmRace:C}};vm.createContext(sandbox);vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/art.js'),'utf8'),sandbox);
+ const cars=C.TRACKS.flatMap(def=>sandbox.window.FarmArt.makeScene(C.buildTrack(def)).filter(p=>p.type.startsWith('volvo')));assert.ok(cars.length>=2);
+});
+
+
+test('Cup requires ordered podiums, ignores trials and grants its prize once',()=>{
+ const s=C.freshSave();
+ function finish(track,position=1,mode='race'){const r=C.makeRace({track,chicken:'greta',difficulty:'easy',mode},s);r.phase='finished';r.time=50;r.actors[0].finishTime=50;r.actors[0].laps=[16,17,17];r.result={position,time:50,bestLap:16,coins:20,medal:1};return r;}
+ C.settleRace(s,finish('orchard'));assert.equal(s.cup.stage,0);
+ C.settleRace(s,finish('market',4));assert.equal(s.cup.stage,0);
+ C.settleRace(s,finish('market',1,'trial'));assert.equal(s.cup.stage,0);
+ C.settleRace(s,finish('market'));assert.equal(s.cup.stage,1);
+ C.settleRace(s,finish('meadow'));assert.equal(s.cup.stage,2);
+ const final=finish('orchard'),before=s.coins;C.settleRace(s,final);assert.equal(s.coins-before,170);assert.equal(s.cup.titles,1);assert.equal(s.cup.stage,0);
+ C.settleRace(s,final);assert.equal(s.coins-before,170);
+ assert.deepEqual(C.sanitizeSave(JSON.parse(JSON.stringify(s))).cup,s.cup);
+});
+test('Trim choices survive saves, stay out of trials and all finish a race',()=>{
+ for(const build of Object.keys(C.BUILDS)){const s=C.freshSave();s.races=10;s.build=build;assert.equal(C.sanitizeSave(s).build,build);const r=runRace({},s);assert.equal(r.phase,'finished',build);const trial=C.makeRace({mode:'trial',track:'market',chicken:'ragna'},s);assert.equal(trial.build,C.BUILDS.stock);}
+ const bad=C.freshSave();bad.build='gas';assert.equal(C.sanitizeSave(bad).build,'stock');
+});
+test('Cross 49 travels, warns, burns, leaves finite mud and respects pause/trials',()=>{
+ for(const mode of ['race','trial']) {
+  const r=C.makeRace({track:'market',chicken:'greta',difficulty:'easy',mode},C.freshSave());r.countdown=0;r.phase='racing';
+  const start=r.cross.along;C.tick(r,{},.1);assert.ok(r.cross.along>start);
+  r.time=9;C.tick(r,{},.1);assert.equal(r.cross.state,'warning');assert.equal(r.puddles.length,0);
+  r.time=11;C.tick(r,{},.1);assert.equal(r.cross.state,'burn');assert.equal(r.puddles.length>0,mode==='race');
+  const frozen=JSON.stringify(r.cross);r.phase='paused';C.tick(r,{},1);assert.equal(JSON.stringify(r.cross),frozen);
+  r.phase='racing';r.time=14;for(let i=0;i<400;i++)C.tick(r,{},1/120);assert.equal(r.puddles.length,0);
+ }
+});
+test('Burnout is a shieldable obstacle while its warning is harmless',()=>{
+ for(const [time,shield,hit] of [[9,0,false],[11,0,true],[11,5,false]]) {
+  const r=C.makeRace({track:'market',chicken:'greta',mode:'race'},C.freshSave());r.phase='racing';r.countdown=0;r.time=time;r.obstacles=[];r.crowd=[];r.cross.along=r.track.length*.2;r.cross.lane=0;
+  Object.assign(r.actors[0],C.pointAt(r.track,r.cross.along,0),{shield});C.tick(r,{},1/120);assert.equal(r.actors[0].slow>0,hit);if(shield)assert.equal(r.actors[0].shield,0);
+ }
+});
+test('Crowd speaks soon after start and rotates short visible lines',()=>{
+ const r=C.makeRace({track:'market',chicken:'greta',mode:'race'},C.freshSave());r.countdown=0;r.phase='racing';for(let i=0;i<60;i++)C.tick(r,{},1/120);assert.ok(r.crowdSpeechTime>0);assert.ok(r.crowdSpeech.length);assert.ok(r.crowd[r.crowdSpeaker]);
+});
+test('A controlled slide rewards straightening, but grass does not',()=>{
+ for(const onRoad of [true,false]) {
+  const r=C.makeRace({track:'market',chicken:'greta',difficulty:'easy',mode:'race'},C.freshSave());r.countdown=0;r.phase='racing';r.obstacles=[];r.cornPoints=[];r.pickups=[];r.crowd=[];
+  const p=r.actors[0],pos=C.pointAt(r.track,r.track.length*.2,onRoad?0:28);Object.assign(p,pos,{along:r.track.length*.2,lastAlong:r.track.length*.2,vx:Math.cos(pos.angle)*70,vy:Math.sin(pos.angle)*70,speed:70,driftCharge:.3});
+  C.tick(r,{x:Math.cos(pos.angle),y:Math.sin(pos.angle)},1/120);
+  assert.equal(p.cornerBoost>0,onRoad);
+ }
+});
+
 console.log(`\n${passed} simulation, progression and art tests passed.`);
+
+test('Sparse harvest retains total value and broken bottles leave expiring glass',()=>{
+ const r=C.makeRace({track:'market',chicken:'greta',mode:'race'},C.freshSave());assert.equal(r.cornPoints.length,6);r.corn=6;const value=C.finishResult(r).coins;r.corn=0;assert.equal(value-C.finishResult(r).coins,36);
+ r.countdown=0;r.phase='racing';r.crowdThrow=100;r.projectiles=[{x:250,y:50,sx:0,sy:0,age:1.29,duration:1.3,radius:10,kind:'bottle'}];C.tick(r,{},.02);assert.equal(r.puddles[0].kind,'glass');for(let i=0;i<500;i++)C.tick(r,{},.01);assert.ok(!r.puddles.some(p=>p.kind==='glass'));
+});
+test('Cross excursions reach the infield and provoke nearby farmers',()=>{
+ const r=C.makeRace({track:'market',chicken:'greta',mode:'race'},C.freshSave());r.time=4;C.updateCross(r,.1);assert.ok(Math.abs(r.cross.lane)>r.track.width);
+ const farmer=r.crowd[0];farmer.x=r.cross.x;farmer.y=r.cross.y;r.cross.heckleCooldown=0;r.crowdSpeechTime=0;C.updateCross(r,0);assert.equal(farmer.mood,'argue');assert.ok(r.crowdSpeechTime>0);
+});
