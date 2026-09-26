@@ -40,7 +40,7 @@
       if(col)rect(ctx,x+c*scale,y+r*scale,scale,scale,col);
     }
   }
-  function chicken(ctx,x,y,color='cream',frame=0,face=1,skin='classic',scale=1) {
+  function chicken(ctx,x,y,color='cream',frame=0,face=1,skin='classic',scale=1,outfit=null) {
     const colors= {
       cream:[P.white,'#e0c995'],rust:['#d28b65','#a96950'],sage:['#c5ceab','#83977c'],lilac:['#d1bfd5','#a08aaf'],brown:['#b79b7b','#8b735c']
     };
@@ -84,6 +84,10 @@
       rect(ctx,-8,-19,1,6,'#b8adb5');rect(ctx,-9,-21,3,2,'#ee8dc9');
       rect(ctx,2,-16,10,3,'#3d354e');rect(ctx,3,-15,8,1,'#f494df');rect(ctx,-9,-4,4,1,'#f494df');
     }
+    if(outfit==='beard'){rect(ctx,4,-12,8,7,'#dad5bc');rect(ctx,6,-5,4,3,'#b6ad98');}
+    if(outfit==='vest'){rect(ctx,-6,-11,11,9,'#d8ed54');rect(ctx,-6,-7,11,2,'#fff5d6');rect(ctx,-1,-11,2,9,'#fff5d6');}
+    if(outfit==='flame'){rect(ctx,0,-23,12,12,'#303440');rect(ctx,2,-20,8,3,'#8aeed4');rect(ctx,1,-15,3,4,'#ef9b39');rect(ctx,7,-14,3,3,'#ee6948');}
+    if(outfit==='neon'){rect(ctx,-10,4,22,2,'#f289cf');rect(ctx,-7,6,15,1,'#71eddf');rect(ctx,-9,-9,3,6,'#f289cf');}
     if(skin!=='classic') {
       rect(ctx,3,-8+bounce,5,2,skin==='gold'?P.gold:P.blue);
       rect(ctx,1,-6+bounce,3,2,skin==='gold'?P.ochre:'#4e717e');
@@ -591,7 +595,7 @@
       if((a.boost>0||a.sprinting||a.cornerBoost>0)&&!reduced) {
         for(let i=0;i<3;i++)rect(ctx,a.x-Math.cos(a.angle)*(12+i*4),a.y-Math.sin(a.angle)*(12+i*4)-6,3,2,i%2?P.red:P.gold);
       }
-      chicken(ctx,a.x,a.y,a.color,a.speed>5?Math.floor(time*(a.boost>0?18:12))%4:0,Math.cos(a.angle)<-.1?-1:1,a.id===0?r.skin||'classic':'classic');
+      chicken(ctx,a.x,a.y,a.color,a.speed>5?Math.floor(time*(a.boost>0?18:12))%4:0,Math.cos(a.angle)<-.1?-1:1,a.id===0?r.skin||'classic':'classic',1,a.id===0?r.outfit:null);
       if(a.id===0) {
         rect(ctx,a.x-3,a.y-27,7,2,P.cream);
         rect(ctx,a.x-2,a.y-25,5,2,P.gold);
@@ -615,11 +619,11 @@
     crowdBubble(ctx,r);
 
   }
-  function drawPortrait(canvas,color,skin='classic') {
+  function drawPortrait(canvas,color,skin='classic',outfit=null) {
     const ctx=canvas.getContext('2d');
     ctx.imageSmoothingEnabled=false;
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    chicken(ctx,canvas.width/2,canvas.height*.83,color,0,1,skin,1.8);
+    chicken(ctx,canvas.width/2,canvas.height*.83,color,0,1,skin,1.8,outfit);
   }
   function drawUpgrade(canvas,type) {
     const ctx=canvas.getContext('2d');
@@ -657,6 +661,25 @@
       rect(ctx,4,20,24,2,P.gold);
     }
   }
+  function catalogDecor(ctx,key,x,y) {
+    if(key==='caravan')prop(ctx,'caravan',x,y+12);
+    if(key==='volvo')scrapCar(ctx,x,y+18,'740');
+    if(key==='shed')prop(ctx,'wreckhouse',x,y+5);
+    if(key==='statue'){
+      rect(ctx,x+8,y+40,38,8,'#8c8980');ctx.save();ctx.translate(x+28,y+38);ctx.scale(1.6,1.6);
+      pattern(ctx,bird,-12,-20,{i:'#8b642f',w:'#efce67',s:'#bd9142',r:'#f2df9e',o:'#efce67'});ctx.restore();
+    }
+    if(key==='sign49'){
+      rect(ctx,x+5,y+8,52,32,'#293b3c');rect(ctx,x+7,y+10,48,28,'#594164');
+      ctx.font='bold 27px monospace';ctx.fillStyle='#8bf5de';ctx.fillText('49',x+13,y+33);
+      rect(ctx,x+10,y+40,3,9,'#70563f');rect(ctx,x+48,y+40,3,9,'#70563f');
+    }
+  }
+  function drawCatalog(canvas,key) {
+    const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);
+    if(C.CATALOG[key].slot==='outfit')chicken(ctx,48,51,'cream',0,1,'classic',1.8,key);
+    else catalogDecor(ctx,key,15,5);
+  }
   function drawFarm(canvas,save,time=0) {
     const ctx=canvas.getContext('2d');
     ctx.imageSmoothingEnabled=false;
@@ -674,6 +697,7 @@
     if(save.cup?.titles){rect(ctx,304,89,12,8,P.gold);rect(ctx,309,97,3,9,P.gold);rect(ctx,304,105,12,3,P.cream);}
     const level=Object.values(save.upgrades).reduce((a,b)=>a+b,0);
     coop(ctx,204,81,level,false);
+    if(save.decor)catalogDecor(ctx,save.decor,45,67);
     fence(ctx,53,111,106);
     fence(ctx,320,111,100);
     for(let row=0;row<3;row++)for(let col=0;col<8;col++) {
@@ -690,7 +714,7 @@
       fence(ctx,280,117,25);
       for(let i=0;i<3;i++)egg(ctx,344+i*10,155,'boost');
     }
-    for(const [x,y,c] of [[183,142,'cream'],[297,146,'rust'],[395,147,'sage']])chicken(ctx,x,y,c,Math.floor(time*3)%4,1,save.skin);
+    for(const [x,y,c] of [[183,142,'cream'],[297,146,'rust'],[395,147,'sage']])chicken(ctx,x,y,c,Math.floor(time*3)%4,1,save.skin,1,save.outfit);
     // Comic fender-bender outside the farmhouse. No injured people.
     scrapCar(ctx,35,128,'240');
     ctx.save();ctx.translate(155,132);ctx.scale(-1,1);scrapCar(ctx,0,0,'740');ctx.restore();
@@ -711,6 +735,6 @@
     swedishFlag(ctx,288,91,15,9);
   }
   root.FarmArt= {
-    crossRider,crossScene,crowdBubble,P,bird,rect,prop,scrapCar,swedishFlag,farmer,chicken,tree,coop,egg,corn,hay,mud,makeScene,makeBackground,render,drawPortrait,drawUpgrade,drawFarm
+    drawCatalog,catalogDecor,crossRider,crossScene,crowdBubble,P,bird,rect,prop,scrapCar,swedishFlag,farmer,chicken,tree,coop,egg,corn,hay,mud,makeScene,makeBackground,render,drawPortrait,drawUpgrade,drawFarm
   };
 })(window);

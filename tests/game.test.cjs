@@ -178,3 +178,12 @@ test('Cross excursions reach the infield and provoke nearby farmers',()=>{
  const r=C.makeRace({track:'market',chicken:'greta',mode:'race'},C.freshSave());r.time=4;C.updateCross(r,.1);assert.ok(Math.abs(r.cross.lane)>r.track.width);
  const farmer=r.crowd[0];farmer.x=r.cross.x;farmer.y=r.cross.y;r.cross.heckleCooldown=0;r.crowdSpeechTime=0;C.updateCross(r,0);assert.equal(farmer.mood,'argue');assert.ok(r.crowdSpeechTime>0);
 });
+test('Catalog purchases charge once, enforce merits and persist equipped cosmetics',()=>{
+ const s=C.freshSave();s.coins=10000;
+ assert.equal(C.buyCosmetic(s,'sign49'),false);assert.equal(s.coins,10000);
+ assert.equal(C.buyCosmetic(s,'beard'),true);assert.equal(s.coins,9820);assert.equal(s.outfit,'beard');assert.equal(C.buyCosmetic(s,'beard'),false);assert.equal(s.coins,9820);
+ assert.equal(C.equipCosmetic(s,'decor','beard'),false);assert.equal(C.equipCosmetic(s,'outfit','neon'),false);assert.equal(C.equipCosmetic(s,'outfit',null),true);
+ s.cup.titles=3;assert.equal(C.buyCosmetic(s,'sign49'),true);assert.equal(s.decor,'sign49');
+ const loaded=C.sanitizeSave(JSON.parse(JSON.stringify(s)));assert.deepEqual(loaded.owned,s.owned);assert.equal(loaded.decor,'sign49');assert.equal(loaded.outfit,null);
+ s.coins=0;assert.equal(C.buyCosmetic(s,'vest'),false);assert.equal(C.buyCosmetic(s,'bogus'),false);
+});

@@ -78,6 +78,41 @@
   { speaker: 4, target: 0, text: "Han fastnade med foten i en portergryta en gång." },
   { speaker: 0, target: 4, text: "Emil älskar Jägermeister nästan lika mycket som Nutella." }
   ];
+  const KLADDIS_STORIES=[
+    ['Kladdis åt Nutella med högaffel.','Skeden höll väl inte besiktningen.'],
+    ['Minns du Emils rekord? 0:42!','Resten tävlar om andraplatsen.'],
+    ['Kladdis kraschade sin Delicato 999RR!','Nu kör han 49. Färre siffror att laga.'],
+    ['Emil fastnade i en portergryta.','Med foten! Han skulle bara provsmaka.'],
+    ['Kladdis lovade oss bredband.','Vi fick en bred dunk. Igen.'],
+    ['Emil tappade bort Inga Tåjärn.','Kolla bakom Nutellaburkarna!'],
+    ['Kladdis tog bort hönans bumpstopp.','Mer spänning. Mindre garanti.'],
+    ['Emil kör snabbare än vinden!','Ändå hinner fogden alltid fram.'],
+    ['Kladdis hackade mjölkroboten.','Nu serverar fanskapet Irish coffee.'],
+    ['Jäger eller Nutella till Emil?','Ställ fram båda. Göm högaffeln.']
+  ];
+  const CATALOG={
+    beard:{name:'Lösskägg från kommunförrådet',slot:'outfit',cost:180,description:'Ett rejält grått skägg. Gäller hela stallet.'},
+    vest:{name:'Varselväst för svartjobb',slot:'outfit',cost:450,description:'Självlysande gul med reflexband.'},
+    flame:{name:'Svetsmask med eld i lacken',slot:'outfit',cost:900,description:'Svart mask, orange flammor. Kräver 5 segrar över Börje.',rival:5},
+    neon:{name:'Neon från kommunens rave',slot:'outfit',cost:1800,description:'Rosa och turkost underglow. Kräver en cuptitel.',titles:1},
+    caravan:{name:'Husvagn utan framtid',slot:'decor',cost:350,description:'En extra husvagn på gårdens vänstra tomt.'},
+    volvo:{name:'Avställd 740 på livstid',slot:'decor',cost:750,description:'En skrotbil på tomten. Ingen skatt, inget hopp.'},
+    shed:{name:'Svågerns dunkpalats',slot:'decor',cost:1400,description:'Ett eget brädskjul på tomten.'},
+    statue:{name:'Björketorps fulaste staty',slot:'decor',cost:3000,description:'En förgylld jättehöna. Kräver två cuptitlar.',titles:2},
+    sign49:{name:'49 – bygdens elräkning',slot:'decor',cost:5000,description:'En stor neonskylt på tomten. Kräver tre cuptitlar.',titles:3}
+  };
+  function catalogUnlocked(save,key) {
+    const item=CATALOG[key];return !!item&&(save.cup.titles>=(item.titles||0))&&(save.rivalWins[0]>=(item.rival||0));
+  }
+  function buyCosmetic(save,key) {
+    const item=CATALOG[key];
+    if(!item||save.owned.includes(key)||!catalogUnlocked(save,key)||save.coins<item.cost)return false;
+    save.coins-=item.cost;save.owned.push(key);save[item.slot]=key;return true;
+  }
+  function equipCosmetic(save,slot,key) {
+    if(!['outfit','decor'].includes(slot)||key!==null&&(!save.owned.includes(key)||CATALOG[key]?.slot!==slot))return false;
+    save[slot]=key;return true;
+  }
   const UPGRADES = {
     feed: {
       name:'Dieselmüsli 98',description:'Frukost ur reservdunken. +3 % toppfart per nivå',tiers:['Lantmännens restlager','Reservdunk Special','Röddiesel à la svåger'],cost:[90,220,450],max:3
@@ -105,7 +140,7 @@
   ];
   function freshSave() {
     return {
-      build:'stock',cup:{stage:0,titles:0},rivalWins:[0,0,0,0],version:2,courseRevision:2,coins:0,xp:0,races:0,wins:0,corn:0,items:0,upgrades: {
+      owned:[],outfit:null,decor:null,build:'stock',cup:{stage:0,titles:0},rivalWins:[0,0,0,0],version:2,courseRevision:2,coins:0,xp:0,races:0,wins:0,corn:0,items:0,upgrades: {
         feed:0,boots:0,nest:0
       },medals: {
       },records: {
@@ -126,6 +161,8 @@
     s.cup={stage:integer(raw.cup?.stage,2),titles:integer(raw.cup?.titles,9999)};
     s.rivalWins=RIVALS.map((_,i)=>integer(raw.rivalWins?.[i]));
     if(BUILDS[raw.build]&&BUILDS[raw.build].unlock<=s.races)s.build=raw.build;
+    s.owned=Object.keys(CATALOG).filter(key=>Array.isArray(raw.owned)&&raw.owned.includes(key));
+    for(const slot of ['outfit','decor'])if(s.owned.includes(raw[slot])&&CATALOG[raw[slot]].slot===slot)s[slot]=raw[slot];
     for (const key of Object.keys(UPGRADES)) s.upgrades[key]=integer(raw.upgrades?.[key],3);
     for (const t of TRACKS) for(const d of ['easy','normal','hard']) s.medals[`${t.id}:${d}`]=integer(raw.medals?.[`${t.id}:${d}`],3);
     for(const t of TRACKS) for(const mode of ['race','trial']) for(const d of ['easy','normal','hard']) {
@@ -265,9 +302,19 @@
     r.crowdSpeechTime=Math.max(0,r.crowdSpeechTime-dt);
     r.crowdTalk-=dt;
     if(r.crowdTalk<=0&&r.crowdSpeechTime<=0&&r.crowd.length) {
-      r.crowdSpeaker=r.crowdLine%r.crowd.length;
-      r.crowdSpeech=['VEM FAN HAR MIN DUNK?','DIN VOLVO LÄCKER IGEN!','DET ÄR ROSTSKYDD, IDIOT!','49! GE FAN I GRÄSMATTAN!','PANTEN ÄR MIN, FÖR HELVETE!','HÅLL KÄFT OCH HÅLL MIN ÖL!'][r.crowdLine%6];
-      r.crowdLine++;r.crowdSpeechTime=5.5;r.crowdTalk=7;
+      const turn=r.crowdLine%5;
+      if(turn<4) {
+        const story=KLADDIS_STORIES[r.storyIndex%KLADDIS_STORIES.length];
+        if(turn%2===0)r.storySpeaker=(r.storyIndex*2)%r.crowd.length;
+        const host=r.crowd[r.storySpeaker];
+        r.crowdSpeaker=turn%2===0?r.storySpeaker:(r.crowd[host.partner]?host.partner:(r.storySpeaker+1)%r.crowd.length);
+        r.crowdSpeech=story[turn%2];
+        if(turn%2===1)r.storyIndex++;
+      } else {
+        r.crowdSpeaker=r.crowdLine%r.crowd.length;
+        r.crowdSpeech=['VEM FAN HAR MIN DUNK?','DIN VOLVO LÄCKER IGEN!','HÅLL KÄFT OCH HÅLL MIN ÖL!'][Math.floor(r.crowdLine/5)%3];
+      }
+      r.crowdLine++;r.crowdSpeechTime=6;r.crowdTalk=6.25;
     }
     for(const farmer of r.crowd) {
       farmer.windup=Math.max(0,farmer.windup-dt);
@@ -393,7 +440,7 @@
       obstacles:def.obstacles.map((f,i)=>( {
         ...pointAt(track,track.length*f,(i%2?1:-1)*(def.width-7)),kind:def.theme==='rain'?'mud':i%2?'mud':'hay',radius:def.theme==='rain'?9:6
       })),
-      crowd:makeCrowd(track),crowdLine:(save.races*7+TRACKS.indexOf(def)*4)%CROWD_DIALOGUE.length,crowdTalk:.1,brawlTimer:4,brawlIndex:0,crowdSpeech:'',crowdSpeechTime:0,crowdSpeaker:0,crowdThrow:2.5,throwIndex:0,projectiles:[],
+      crowd:makeCrowd(track),crowdLine:0,storyIndex:(save.races*3+TRACKS.indexOf(def)*2)%KLADDIS_STORIES.length,storySpeaker:0,crowdTalk:.1,brawlTimer:4,brawlIndex:0,crowdSpeech:'',crowdSpeechTime:0,crowdSpeaker:0,crowdThrow:2.5,throwIndex:0,projectiles:[],
       cross:{...pointAt(track,track.length*.38,8),along:track.length*.38,lane:8,state:'ride',spray:0,splashes:0},
       puddles:[],maxStamina:c.stamina+up.nest*.4+build.stamina,footTimer:0
     };
@@ -653,7 +700,7 @@
     return {x:a[1]+(b[1]-a[1])*f,y:a[2]+(b[2]-a[2])*f,angle:b[3]};
   }
   const api= {
-    updateCross,BUILDS,RIVALS,roadWidth,CROWD_DIALOGUE,makeCrowd,CHARACTERS,TRACKS,UPGRADES,CONTRACTS,clamp,freshSave,sanitizeSave,buyUpgrade,claimContract,buildTrack,pointAt,project,rectangleClear,makeRace,tick,ranking,useItem,settleRace,finishResult,formatTime,ghostAt
+    CATALOG,catalogUnlocked,buyCosmetic,equipCosmetic,updateCross,BUILDS,RIVALS,roadWidth,CROWD_DIALOGUE,makeCrowd,CHARACTERS,TRACKS,UPGRADES,CONTRACTS,clamp,freshSave,sanitizeSave,buyUpgrade,claimContract,buildTrack,pointAt,project,rectangleClear,makeRace,tick,ranking,useItem,settleRace,finishResult,formatTime,ghostAt
   };
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
   else root.FarmRace=api;

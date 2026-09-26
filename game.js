@@ -104,7 +104,7 @@
         renderChickens();
       });
       $('chicken-cards').append(button);
-      A.drawPortrait(button.querySelector('canvas'),c.color,save.skin);
+      A.drawPortrait(button.querySelector('canvas'),c.color,save.skin,save.outfit);
     }
     setText('chicken-perk',trial?'Svets-Greta utan uppgraderingar · samma villkor för varje rekord':C.CHARACTERS[selected.chicken].tag+' '+C.CHARACTERS[selected.chicken].perk);
   }
@@ -128,12 +128,24 @@
       $('upgrade-cards').append(card);
       A.drawUpgrade(card.querySelector('canvas'),key);
     }
+    const trimHeading=document.createElement('h3');trimHeading.className='garage-subhead';trimHeading.textContent='BÄNK 02 / Gratis fultrim · välj ett bygge';$('upgrade-cards').append(trimHeading);
     for(const [key,b] of Object.entries(C.BUILDS)) {
       const card=document.createElement('article');card.className='upgrade-card';
       const unlocked=save.races>=b.unlock;
       card.innerHTML=`<h3>${b.name}</h3><p>${b.description}</p><small>${unlocked?'Gratis att byta • ett trimval åt gången':`Låses upp efter ${b.unlock} lopp`}</small><button class="secondary" aria-pressed="${save.build===key}" ${unlocked?'':'disabled'}>${save.build===key?'Monterat':unlocked?'Montera':`${save.races} / ${b.unlock} lopp`}</button>`;
       card.querySelector('button').onclick=()=>{save.build=key;persist();renderWorkshop();modeCopy();audio.play('click');};
       $('upgrade-cards').append(card);
+    }
+    $('catalog-cards').replaceChildren();
+    for(const [key,item] of Object.entries(C.CATALOG)) {
+      const owned=save.owned.includes(key),active=save[item.slot]===key,unlocked=C.catalogUnlocked(save,key),card=document.createElement('article');
+      card.className='catalog-product';
+      card.innerHTML=`<canvas width="96" height="64" aria-label="Förhandsvisning: ${item.name}"></canvas><span class="catalog-price">${item.cost}<small> MYNT</small></span><h3>${item.name}</h3><p>${item.description}</p><small>${item.slot==='outfit'?'En styling åt gången, alla hönor':'En dekor åt gången på den extra tomtplatsen'} · endast utseende</small><button class="secondary" ${!owned&&(!unlocked||save.coins<item.cost)?'disabled':''}>${active?'Ta av':owned?'Använd':!unlocked?'Meritkrav saknas':`Köp · ${item.cost} mynt`}</button>`;
+      card.querySelector('button').onclick=()=>{
+        if(owned)C.equipCosmetic(save,item.slot,active?null:key);else if(!C.buyCosmetic(save,key))return;
+        persist();renderWorkshop();renderWallet();renderChickens();audio.play(owned?'click':'buy');
+      };
+      $('catalog-cards').append(card);A.drawCatalog?.(card.querySelector('canvas'),key);
     }
     $('skin-buttons').replaceChildren();
     for(const [key,name,unlocked,desc] of [['classic','Ärvd från dödsboet',true,'Luktar fortfarande lagård'],['blue','Kommunens avlagda disktrasa',save.races>=3,'Kör klart 3 lopp'],['gold','Förgylld pantkungstrasa',C.TRACKS.every(t=>(save.medals[`${t.id}:normal`]||0)===3),'Guld på alla banor i Pantpanik']]) {
@@ -158,17 +170,19 @@
     setText('unlock-note',next?`Nästa utflykt: ${next.name}. ${save.races} / ${next.unlock} avslutade lopp. Även en femteplats räknas!`:'Alla banor är öppna! Samla nio guldmedaljer, bygg ut gården och jaga dina rekord.');
     const cup=C.TRACKS[save.cup.stage];
     $('unlock-note').textContent+=` Kommunmästerskapet: ${save.cup.stage}/3 pallplatser. Nästa: ${cup.short}. Kör ett gårdslopp på valfri svårighet och kom topp 3. Tre etapper ger 150 mynt och en pokal. Titlar: ${save.cup.titles}.`;
+    $('cup-ledger').innerHTML=`<strong>${save.cup.titles} CUPTITLAR · 150 MYNT PER FULLBORDAD CUP</strong><ol>${C.TRACKS.map((t,i)=>`<li class="${i<save.cup.stage?'done':i===save.cup.stage?'current':''}"><span>${i<save.cup.stage?'✓':'0'+(i+1)}</span><b>${t.short}</b><small>${i<save.cup.stage?'KVITTERAD':i===save.cup.stage?'NÄSTA: TOPP 3':'VÄNTAR'}</small></li>`).join('')}</ol>`;
     $('contract-cards').replaceChildren();
+    $('rival-cards').replaceChildren();
     for(const [i,rival] of C.RIVALS.entries()) {
       const card=document.createElement('article');card.className='contract-card';
       card.innerHTML=`<h4>${rival.name}</h4><p>“${rival.quip}”</p><small>Du har slagit rivalen ${save.rivalWins[i]} gånger.</small>`;
-      $('contract-cards').append(card);
+      $('rival-cards').append(card);
     }
 
     for(const c of C.CONTRACTS) {
       const claimed=save.contracts[c.id]||0,progress=Math.min(c.target,Math.max(0,save[c.id]-claimed*c.target)),ready=progress>=c.target,card=document.createElement('article');
-      card.className='contract-card';
-      card.innerHTML=`<h4>${c.name}</h4><p>${c.description} · ${progress}/${c.target}</p><small>+${c.reward} gårdsmynt · omgång ${claimed+1}</small><button class="secondary" ${ready?'':'disabled'}>${ready?'Hämta':'Pågår'}</button>`;
+      card.className='contract-card'+(ready?' claim-ready':'');
+      card.innerHTML=`<span class="ledger-label">${ready?'KLAR ATT KVITTERA':'PÅGÅENDE ÄRENDE'}</span><h4>${c.name}</h4><p>${c.description} · ${progress}/${c.target}</p><progress max="${c.target}" value="${progress}" aria-label="${c.name}"></progress><small>+${c.reward} gårdsmynt · omgång ${claimed+1}</small><button class="secondary" ${ready?'':'disabled'}>${ready?'Hämta':'Pågår'}</button>`;
       card.querySelector('button').onclick=()=> {
         const reward=C.claimContract(save,c.id);
         if(reward) {
@@ -186,7 +200,7 @@
   }
   function setView(next) {
     view=next;
-    for(const key of ['race','workshop','journal'])$(key+'-view').classList.toggle('hidden',key!==next);
+    for(const key of ['race','workshop','catalog','journal'])$(key+'-view').classList.toggle('hidden',key!==next);
     document.querySelectorAll('[data-view]').forEach(button=> {
       button.classList.toggle('active',button.dataset.view===next);
       button.setAttribute('aria-pressed',String(button.dataset.view===next));
@@ -224,6 +238,7 @@
     document.querySelectorAll('dialog[open]').forEach(d=>d.close());
     race=C.makeRace(selected,save);
     race.skin=save.skin;
+    race.outfit=save.outfit;
     background=getBackground(race.track);
     screen='race';
     $('hub').classList.add('hidden');
@@ -263,7 +278,7 @@
     const trial=race.options.mode==='trial',p=race.actors[0];
     setText('result-title',trial?(result.newRecord?'Nytt personbästa!':'En fin träningsrunda.'):result.position===1?'Gårdens nya stolthet!':result.position<=3?'En plats på pallen!':'Varje runda räknas.');
     setText('result-copy',`${race.track.name} · ${trial?'Tidsträning':`${result.position}:a av 5 hönor`} ${result.newRecord?'· Nytt banrekord!':''}${trial?'':` · ${C.RIVALS[0].name}: ${save.rivalWins[0]>0?'Nästa gång tar jag fan traktorn.':C.RIVALS[0].quip}`}`);
-    A.drawPortrait($('result-bird'),p.color,save.skin);
+    A.drawPortrait($('result-bird'),p.color,save.skin,save.outfit);
     $('result-stats').innerHTML=`<div><span>LOPPTID</span><strong>${C.formatTime(result.time)}</strong></div><div><span>BÄSTA VARV</span><strong>${C.formatTime(result.bestLap)}</strong></div><div><span>MAJSKORN</span><strong>${result.corn}</strong></div>`;
     $('result-rewards').innerHTML=trial?`Träning ger färdighet.<small>${result.newRecord&&save.ghosts[race.track.id]?'Din nya spökhöna är sparad. Slå den nästa gång!':'Ditt bästa lopp blir en spökhöna att jaga.'} Inga gårdsmynt delas ut.</small>`:`+${result.coins} gårdsmynt<small>Placering + ${result.corn*6} för majs ${result.clean?'+ 10 för ett rent lopp':''} · ${save.coins} mynt i kassan</small>`;
     const unlocked=C.TRACKS.filter(t=>oldRaces<t.unlock&&save.races>=t.unlock).map(t=>`${t.name} är nu öppen!`);
