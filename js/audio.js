@@ -23,6 +23,7 @@
       this.timer=null;
       this.paused=false;
       this.lastLap=false;
+      this.duckUntil=0;
       this.nodes=new Set();
       this.noise=null;
       this.player=null;
@@ -75,7 +76,7 @@
       if(!this.context)return;
       const t=this.context.currentTime;
       this.master.gain.setTargetAtTime(this.settings.mute?0:.75,t,.03);
-      this.music.gain.setTargetAtTime(this.settings.music*.9,t,.04);
+      this.music.gain.setTargetAtTime(this.settings.music*.9*(this.duckUntil>t?.25:1),t,.04);
       this.sfx.gain.setTargetAtTime(this.settings.sfx*.55,t,.04);
       this.ambient.gain.setTargetAtTime(this.settings.ambience*.23,t,.04);
     }
@@ -198,6 +199,7 @@
     schedule() {
       if(!this.context||this.paused)return;
       const c=this.context;
+      if(this.duckUntil&&c.currentTime>=this.duckUntil){this.duckUntil=0;this.apply();}
       if(this.next<c.currentTime-.1)this.next=c.currentTime+.02;
       while(this.next<c.currentTime+.12) {
         const s=this.step,t=this.next;
@@ -214,7 +216,7 @@
       if(!c||this.paused||this.settings.mute)return;
       const now=c.currentTime;
       if(now-(this.lastSfx[name]||-100)<( {
-        coin:.07,step:.1,grass:.1,bump:.3
+        coin:.07,step:.1,grass:.1,bump:.3,sprint:.4,boost:.3
       }
       [name]||.05))return;
       this.lastSfx[name]=now;
@@ -239,8 +241,20 @@
         break;
         case'pickup':[72,76,79,84].forEach((p,i)=>n(p,i*.045,.13,'square',.16));
         break;
-        case'boost':n(48,0,.36,'sawtooth',.16,84);
-        this.hiss(now,.2,.16,1600,this.sfx);
+        case'eggboost':
+        if(this.settings.sfx>0){this.duckUntil=now+1.8;this.apply();}
+        n(35,0,.9,'sawtooth',.65,67);n(47,.02,.7,'triangle',.6,79);
+        this.hiss(now,1.25,.7,700,this.sfx);
+        for(let i=0;i<7;i++){n(43+i,.12+i*.16,.16,'sawtooth',.28,34);this.hiss(now+.12+i*.16,.1,.3,1400,this.sfx);}
+        break;
+        case'sprint':
+        n(33,0,.28,'sawtooth',.24,57);n(40,.04,.22,'triangle',.3,64);
+        this.hiss(now,.26,.32,900,this.sfx);
+        break;
+        case'boost':
+        n(29,0,.55,'sawtooth',.3,65);n(41,.03,.4,'triangle',.38,77);
+        this.hiss(now,.5,.5,1200,this.sfx);
+        for(let i=0;i<3;i++){n(38+i*5,.07+i*.11,.09,'sawtooth',.2,29);this.hiss(now+.07+i*.11,.07,.3,700,this.sfx);}
         break;
         case'shield':n(84,0,.3,'triangle',.3);
         n(91,.06,.4,'sine',.23);

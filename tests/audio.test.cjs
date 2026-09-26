@@ -14,6 +14,6 @@ a.pause(true);a.setTheme('market');assert.equal(a.player.paused,true,'Theme chan
 a.configure({music:.45,sfx:.65,ambience:0,mute:false});tones.length=0;
 for(let i=0;i<48;i++){a.context.currentTime+=.5;a.schedule();}
 assert.equal(tones.length,0,'Music must never generate synthetic instrument tones');
-for(const effect of ['coin','pickup','boost','shield','mud','bump','count','go','lap','finish','buy','step','grass','tired','wrongway','crowd','throw','bottle','argument','scuffle'])a.play(effect);
+for(const effect of ['coin','pickup','sprint','eggboost','boost','shield','mud','bump','count','go','lap','finish','buy','step','grass','tired','wrongway','crowd','throw','bottle','argument','scuffle'])a.play(effect);
 a.pause(true);assert.equal(timers.size,0);assert.equal(a.nodes.size,0);a.pause(false);assert.equal(timers.size,1);a.configure({music:0,sfx:0,ambience:0,mute:true});assert.equal(levels.at(-1),0);assert.ok(levels.includes(0));a.destroy();assert.equal(timers.size,0);
 console.log('PASS audio: bundled recordings, theme changes, pause/resume, no synth music, SFX, mute and cleanup.');})();

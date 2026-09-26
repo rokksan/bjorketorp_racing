@@ -448,7 +448,7 @@
   function notify(r,type,text) {
     r.events.push(type);
     if(text) {
-      if(r.feedbackTime>0&&!['go','lap','finish','wrongway'].includes(type)){if(text!==r.feedback)r.pendingFeedback=text;return;}
+      if(r.feedbackTime>0&&!['go','lap','finish','wrongway','eggboost'].includes(type)){if(text!==r.feedback)r.pendingFeedback=text;return;}
       r.feedback=text;
       r.pendingFeedback=null;
       r.feedbackTime=5;
@@ -461,8 +461,10 @@
     p.item=null;
     r.usedItems++;
     if(type==='boost') {
-      p.boost=2;
-      notify(r,'boost','Motorsprit i äggkopp! Full fart framåt.');
+      p.boost=2.6;
+      const launch=Math.max(p.speed,r.character.speed)*1.35;
+      p.vx=Math.cos(p.angle)*launch;p.vy=Math.sin(p.angle)*launch;
+      notify(r,'eggboost','MOTORSPRIT! Dubbel fart, dåligt grepp. Sikta på rakan!');
     }
     if(type==='shield') {
       p.shield=8;
@@ -561,6 +563,7 @@
         dy/=len;
       }
       const sprint=isPlayer&&input.sprint&&a.stamina>0&&len>0&&a.boost===0&&a.slow===0;
+      if(sprint&&!a.sprinting)r.events.push('sprint');
       a.sprinting=sprint;
       if(isPlayer) {
         const recovering=!input.sprint||len===0||a.boost>0||a.slow>0;
@@ -577,9 +580,9 @@
         a.driftCharge=sliding?Math.min(.8,(a.driftCharge||0)+dt):a.driftCharge||0;
         if(!sliding){if(a.driftCharge>.18&&alignment>.94&&!offroad&&len>0&&a.slow===0){a.cornerBoost=.45;notify(r,'boost','Snygg sväng! Gratis skjuts från svågern.');a.driftCharge=0;}else if(offroad||!len||a.slow>0)a.driftCharge=0;else a.driftCharge=Math.max(0,a.driftCharge-dt*.3);}
       }
-      const factor=a.slow>0?.48:a.boost>0?1.5:sprint?1.32:a.cornerBoost>0?1.12:1;
+      const factor=a.slow>0?.48:a.boost>0?(isPlayer?2.05:1.5):sprint?1.32:a.cornerBoost>0?1.12:1;
       const desired=base*factor*(offroad?(isPlayer?.53+r.up.boots*.065:.6):1)*(len>0?1:0);
-      const grip=isPlayer?(r.character.grip+r.up.boots*1.8)*r.build.grip:8,blend=1-Math.exp(-grip*dt);
+      const grip=isPlayer?(r.character.grip+r.up.boots*1.8)*r.build.grip*(a.boost>0?.42:1):8,blend=1-Math.exp(-grip*dt);
       a.vx+=(dx*desired-a.vx)*blend;
       a.vy+=(dy*desired-a.vy)*blend;
       a.x=clamp(a.x+a.vx*dt,10,470);
@@ -600,6 +603,7 @@
           if(isPlayer)notify(r,'shield','Skölden tog smällen!');
         }
         else {
+          a.boost=0;
           a.slow=((isPlayer&&r.options.chicken==='par')?.45:.9)*(isPlayer?r.build.armor:1);
           if(isPlayer) {
             r.bumps++;

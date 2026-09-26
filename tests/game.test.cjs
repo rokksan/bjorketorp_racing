@@ -5,7 +5,7 @@ let passed=0;
 function test(name,fn){fn();passed++;console.log('PASS',name);}
 function runRace(options={},save=C.freshSave(),dt=1/120){
   const r=C.makeRace({track:'market',chicken:'greta',difficulty:'normal',mode:'race',...options},save);let steps=0;
-  while(r.phase!=='finished'&&steps++<120/dt){const p=r.actors[0],aim=C.pointAt(r.track,p.along+15);C.tick(r,{x:aim.x-p.x,y:aim.y-p.y,sprint:p.stamina>.5,item:!!p.item},dt);}
+  while(r.phase!=='finished'&&steps++<120/dt){const p=r.actors[0],aim=C.pointAt(r.track,p.along+15);C.tick(r,{x:aim.x-p.x,y:aim.y-p.y,sprint:p.stamina>.5,item:options.autoItems!==false&&!!p.item},dt);}
   return r;
 }
 const completed=[];
@@ -13,7 +13,7 @@ test('Every course can be completed by movement alone, with ordered sectors and 
   for(const t of C.TRACKS){const r=runRace({track:t.id});assert.equal(r.phase,'finished',t.id);assert.equal(r.actors[0].laps.length,3);assert.equal(r.actors[0].checkpoint,12);assert.ok(r.time>25&&r.time<85);assert.ok(r.corn>0);completed.push(r);}
 });
 test('All four chickens can finish, and character perks produce different times',()=>{
-  const times=[];for(const chicken of Object.keys(C.CHARACTERS)){const r=runRace({chicken});assert.equal(r.phase,'finished');times.push(r.time);}assert.ok(Math.max(...times)-Math.min(...times)>1);
+  const times=[];for(const chicken of Object.keys(C.CHARACTERS)){const r=runRace({chicken,autoItems:false});assert.equal(r.phase,'finished');times.push(r.time);}assert.ok(Math.max(...times)-Math.min(...times)>1);
 });
 test('Time trial standardizes chicken, upgrades and difficulty and never pays farm currency',()=>{
   const save=C.freshSave();save.upgrades={feed:3,boots:3,nest:3};const r=runRace({mode:'trial',chicken:'ragna',difficulty:'hard'},save);
@@ -186,4 +186,15 @@ test('Catalog purchases charge once, enforce merits and persist equipped cosmeti
  s.cup.titles=3;assert.equal(C.buyCosmetic(s,'sign49'),true);assert.equal(s.decor,'sign49');
  const loaded=C.sanitizeSave(JSON.parse(JSON.stringify(s)));assert.deepEqual(loaded.owned,s.owned);assert.equal(loaded.decor,'sign49');assert.equal(loaded.outfit,null);
  s.coins=0;assert.equal(C.buyCosmetic(s,'vest'),false);assert.equal(C.buyCosmetic(s,'bogus'),false);
+});
+test('Sprint plays its ignition once per activation, not every simulation step',()=>{
+ const r=C.makeRace({track:'market',chicken:'greta',mode:'race'},C.freshSave());r.countdown=0;r.phase='racing';
+ C.tick(r,{x:1,sprint:true},1/120);assert.ok(r.events.includes('sprint'));
+ C.tick(r,{x:1,sprint:true},1/120);assert.ok(!r.events.includes('sprint'));
+ C.tick(r,{x:1,sprint:false},1/120);C.tick(r,{x:1,sprint:true},1/120);assert.ok(r.events.includes('sprint'));
+});
+
+test('Space boost emits a dedicated sound and an unshielded obstacle cancels it',()=>{
+ const r=C.makeRace({track:'market',chicken:'greta',mode:'race'},C.freshSave());r.phase='racing';r.countdown=0;r.crowd=[];const p=r.actors[0];p.item='boost';C.tick(r,{x:1,item:true},1/120);assert.ok(r.events.includes('eggboost'));assert.ok(p.boost>2.5);
+ r.obstacles=[{x:p.x,y:p.y,radius:8,kind:'hay'}];p.cooldown=0;C.tick(r,{x:1},1/120);assert.equal(p.boost,0);assert.ok(p.slow>0);
 });
