@@ -84,6 +84,8 @@
       rect(ctx,-8,-19,1,6,'#b8adb5');rect(ctx,-9,-21,3,2,'#ee8dc9');
       rect(ctx,2,-16,10,3,'#3d354e');rect(ctx,3,-15,8,1,'#f494df');rect(ctx,-9,-4,4,1,'#f494df');
     }
+    if(outfit==='outlaw'){rect(ctx,-6,-12,12,11,'#e5b94c');rect(ctx,-4,-10,3,3,'#a53635');rect(ctx,1,-5,3,3,'#a53635');rect(ctx,-1,-8,3,3,'#a53635');}
+    if(outfit==='arsenal'){rect(ctx,0,-22,12,3,'#b6423b');rect(ctx,10,-20,5,3,'#b6423b');for(let i=0;i<5;i++){rect(ctx,-6+i*2,-12+i*2,4,4,'#503d32');rect(ctx,-5+i*2,-12+i*2,2,3,'#e3bd64');}}
     if(outfit==='beard'){rect(ctx,4,-12,8,7,'#dad5bc');rect(ctx,6,-5,4,3,'#b6ad98');}
     if(outfit==='vest'){rect(ctx,-6,-11,11,9,'#d8ed54');rect(ctx,-6,-7,11,2,'#fff5d6');rect(ctx,-1,-11,2,9,'#fff5d6');}
     if(outfit==='flame'){rect(ctx,0,-23,12,12,'#303440');rect(ctx,2,-20,8,3,'#8aeed4');rect(ctx,1,-15,3,4,'#ef9b39');rect(ctx,7,-14,3,3,'#ee6948');}

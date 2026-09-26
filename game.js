@@ -180,7 +180,7 @@
     for(const [key,item] of Object.entries(C.CATALOG)) {
       const owned=save.owned.includes(key),active=save[item.slot]===key,unlocked=C.catalogUnlocked(save,key),card=document.createElement('article');
       card.className='catalog-product';
-      card.innerHTML=`<canvas width="96" height="64" aria-label="Förhandsvisning: ${item.name}"></canvas><span class="catalog-price">${item.cost}<small> MYNT</small></span><h3>${item.name}</h3><p>${item.description}</p><small>${item.slot==='outfit'?'En styling åt gången, alla hönor':'En dekor åt gången på den extra tomtplatsen'} · endast utseende</small><button class="secondary" ${!owned&&(!unlocked||save.coins<item.cost)?'disabled':''}>${active?'Ta av':owned?'Använd':!unlocked?'Meritkrav saknas':`Köp · ${item.cost} mynt`}</button>`;
+      card.innerHTML=`<canvas width="96" height="64" aria-label="Förhandsvisning: ${item.name}"></canvas><span class="catalog-price">${item.challenge?'MERIT':item.cost}<small>${item.challenge?' BELÖNING':' MYNT'}</small></span><h3>${item.name}</h3><p>${item.description}</p><small>${item.slot==='outfit'?'En styling åt gången, alla hönor':'En dekor åt gången på den extra tomtplatsen'} · endast utseende</small><button class="secondary" ${!owned&&(!unlocked||save.coins<item.cost)?'disabled':''}>${active?'Ta av':owned?'Använd':!unlocked?(item.challenge?'Lås upp i skuldboken':'Meritkrav saknas'):`Köp · ${item.cost} mynt`}</button>`;
       card.querySelector('button').onclick=()=>{
         if(owned)C.equipCosmetic(save,item.slot,active?null:key);else if(!C.buyCosmetic(save,key))return;
         persist();renderWorkshop();renderWallet();renderChickens();audio.play(owned?'click':'buy');
@@ -212,6 +212,7 @@
     $('unlock-note').textContent+=` Kommunmästerskapet: ${save.cup.stage}/3 pallplatser. Nästa: ${cup.short}. Kör ett gårdslopp på valfri svårighet och kom topp 3. Tre etapper ger 150 mynt och en pokal. Titlar: ${save.cup.titles}.`;
     $('cup-ledger').innerHTML=`<strong>${save.cup.titles} CUPTITLAR · 150 MYNT PER FULLBORDAD CUP</strong><ol>${C.TRACKS.map((t,i)=>`<li class="${i<save.cup.stage?'done':i===save.cup.stage?'current':''}"><span>${i<save.cup.stage?'✓':'0'+(i+1)}</span><b>${t.short}</b><small>${i<save.cup.stage?'KVITTERAD':i===save.cup.stage?'NÄSTA: TOPP 3':'VÄNTAR'}</small></li>`).join('')}</ol>`;
     $('contract-cards').replaceChildren();
+    $('combat-contract-cards').replaceChildren();
     $('rival-cards').replaceChildren();
     for(const [i,rival] of C.RIVALS.entries()) {
       const card=document.createElement('article');card.className='contract-card';
@@ -220,9 +221,9 @@
     }
 
     for(const c of C.CONTRACTS) {
-      const claimed=save.contracts[c.id]||0,progress=Math.min(c.target,Math.max(0,save[c.id]-claimed*c.target)),ready=progress>=c.target,card=document.createElement('article');
+      const claimed=save.contracts[c.id]||0,progress=Math.min(c.target,Math.max(0,save[c.id]-claimed*c.target)),done=c.once&&claimed>0,ready=!done&&progress>=c.target,card=document.createElement('article');
       card.className='contract-card'+(ready?' claim-ready':'');
-      card.innerHTML=`<span class="ledger-label">${ready?'KLAR ATT KVITTERA':'PÅGÅENDE ÄRENDE'}</span><h4>${c.name}</h4><p>${c.description} · ${progress}/${c.target}</p><progress max="${c.target}" value="${progress}" aria-label="${c.name}"></progress><small>+${c.reward} gårdsmynt · omgång ${claimed+1}</small><button class="secondary" ${ready?'':'disabled'}>${ready?'Hämta':'Pågår'}</button>`;
+      card.innerHTML=`<span class="ledger-label">${done?'KVITTERAT':ready?'KLAR ATT KVITTERA':'PÅGÅENDE ÄRENDE'}</span><h4>${c.name}</h4><p>${c.description} · ${done?c.target:progress}/${c.target}</p><progress max="${c.target}" value="${done?c.target:progress}" aria-label="${c.name}"></progress><small>+${c.reward} gårdsmynt · ${c.once?'engångsuppdrag':'omgång '+(claimed+1)}${c.cosmetic?' · '+C.CATALOG[c.cosmetic].name:''}</small><button class="secondary" ${ready?'':'disabled'}>${done?'Kvitterat':ready?'Hämta':'Pågår'}</button>`;
       card.querySelector('button').onclick=()=> {
         const reward=C.claimContract(save,c.id);
         if(reward) {
@@ -231,10 +232,10 @@
           renderWallet();
           renderWorkshop();
           audio.play('buy');
-          toast(`Uppdrag klart! +${reward} gårdsmynt.`);
+          toast(`Uppdrag klart! +${reward} gårdsmynt.${c.cosmetic?' Styling finns nu i Hönstema!':''}`);
         }
       };
-      $('contract-cards').append(card);
+      $(c.mode==='combat'?'combat-contract-cards':'contract-cards').append(card);
     }
     $('medal-shelf').innerHTML=C.TRACKS.map(t=>`<div class="medal-row"><b>${t.short}</b>${['easy','normal','hard'].map((d,i)=>{const m=save.medals[`${t.id}:${d}`]||0;return `<span class="${m?'earned':''}">${['—','● BRONS','● SILVER','★ GULD'][m]}<small>${['BAKFYLLA','PANTPANIK','FOGDEN'][i]}</small></span>`;}).join('')}</div>`).join('');
   }
@@ -331,7 +332,7 @@
     const unlocked=C.TRACKS.filter(t=>oldRaces<t.unlock&&save.races>=t.unlock).map(t=>`${t.name} är nu öppen!`);
     if(result.cupMessage)unlocked.push(result.cupMessage);
     if(oldRaces<3&&save.races>=3)unlocked.push('Kommunens avlagda disktrasa upplåst i hönshuset!');
-    if(!trial&&C.CONTRACTS.some(c=>save[c.id]>=((save.contracts[c.id]||0)+1)*c.target))unlocked.push('Ett uppdrag är klart. Hämta belöningen i gårdsboken.');
+    if(!trial&&C.CONTRACTS.some(c=>(!c.once||!save.contracts[c.id])&&save[c.id]>=((save.contracts[c.id]||0)+1)*c.target))unlocked.push('Ett uppdrag är klart. Hämta belöningen i gårdsboken.');
     $('result-unlocks').classList.toggle('hidden',!unlocked.length);
     setText('result-unlocks',unlocked.join(' '));
     $('result-ranking').replaceChildren();

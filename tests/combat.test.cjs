@@ -115,3 +115,23 @@ console.log('PASS themed hazards: warning, fair impacts, pause and press bypass.
  r.phase='paused';const before=JSON.stringify(dog);C.tick(r,{},1);assert.equal(JSON.stringify(dog),before);
 }
 console.log('PASS guard dog warning, crossing, braking and pause.');
+// Combat ledger settles once, repeats currency jobs, and grants unique cosmetics.
+{
+ const s=C.freshSave();
+ const finish=(track,weapon,shots=1)=>{const r=C.makeRace({mode:'combat',combatTrack:track,weapon},s);r.phase='finished';r.result={position:2,coins:90,time:100,bestLap:50};r.combatShots=shots;r.combatPotatoHits=5;C.settleRace(s,r);const snapshot=JSON.stringify(s);assert.equal(C.settleRace(s,r),null);assert.equal(JSON.stringify(s),snapshot);};
+ finish('fair','shotgun',0);finish('scrapyard','pistol');finish('peat','rifle');
+ assert.equal(s.combatPeace,1);assert.equal(s.combatPodiums,3);assert.equal(s.combatPotatoHits,15);
+ assert.equal(C.claimContract(s,'combatPotatoHits'),150);assert.equal(C.claimContract(s,'combatPotatoHits'),0);
+ assert.equal(C.claimContract(s,'combatPodiums'),180);assert.equal(C.claimContract(s,'combatPeace'),100);
+ assert.equal(C.claimContract(s,'combatTour'),0);assert.equal(C.buyCosmetic(s,'outlaw'),false);
+ finish('airstrip','potato');finish('park','shotgun');
+ assert.equal(s.combatArsenal,4);assert.equal(s.combatTour,5);
+ assert.equal(C.claimContract(s,'combatTour'),250);assert.equal(C.claimContract(s,'combatTour'),0);
+ assert.equal(C.claimContract(s,'combatArsenal'),200);assert.ok(s.owned.includes('outlaw'));assert.ok(s.owned.includes('arsenal'));
+ assert.equal(C.equipCosmetic(s,'outfit','arsenal'),true);
+ const restored=C.sanitizeSave(JSON.parse(JSON.stringify(s)));assert.equal(restored.outfit,'arsenal');assert.equal(restored.combatTour,5);assert.equal(C.claimContract(restored,'combatArsenal'),0);
+ finish('fair','potato');assert.equal(C.claimContract(s,'combatPotatoHits'),150);assert.equal(s.combatTour,5);
+ const old=C.sanitizeSave({combatFinishes:30});assert.equal(old.combatTour,0);assert.equal(old.combatPeace,0);
+ const bad=C.sanitizeSave({combatTracksDone:['fair','fair','bogus'],combatWeaponsDone:['potato','potato'],combatPotatoHits:-3});assert.equal(bad.combatTour,1);assert.equal(bad.combatArsenal,1);assert.equal(bad.combatPotatoHits,0);
+}
+console.log('PASS combat ledger rewards, one-time styling, repeat jobs, duplicate settlement and migration.');

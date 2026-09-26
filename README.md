@@ -125,3 +125,8 @@ Marknaden har grus, tält, loppisstånd och rastbord. Skrotgården har smutsig h
 Skrotens vakthund varnar i två sekunder innan den rusar över vägen. Den bromsar både spelaren och rivalerna, kan blockeras med sköld och stannar när spelet pausas.
 
 Avslutade vanliga lopp och stridslopp ger 60 grundmynt, placeringsbonus (45/34/27/21/18), 10 per upplockat mynt, 15 för ett rent lopp och svårighetsbonus (0/8/16). Tidsträning ger inga mynt.
+
+
+### Skuldbokens stridsuppdrag
+
+Stridsläget har en egen avdelning med återkommande belöningar: 15 potatisträffar på rivaler (150 mynt), tre pallplatser (180) och en målgång utan avlossade skott (100). Framsteg bokförs först vid målgång. Sköldblockeringar och självträffar räknas inte. Alla fem olika stridsbanor ger en gång 250 mynt och Besöksförbudets guldväst; alla fyra olika vapen ger en gång 200 mynt och Svågerns patronbälte. Belöningarna kvitteras i skuldboken och styling väljs sedan gratis i Hönstema. Äldre sparningar behåller sin progression, men nya uppdrag räknar från uppdateringen.

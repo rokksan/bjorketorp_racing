@@ -104,6 +104,8 @@
     ['Jäger eller Nutella till Emil?','Ställ fram båda. Göm högaffeln.']
   ];
   const CATALOG={
+    outlaw:{name:'Besöksförbudets guldväst',slot:'outfit',cost:0,challenge:'combatTour',description:'Guldväst med rött kryss. Belöning i skuldboken: kör alla fem stridsbanor.'},
+    arsenal:{name:'Svågerns patronbälte',slot:'outfit',cost:0,challenge:'combatArsenal',description:'Patronbälte och röd bandana. Belöning i skuldboken: kör med alla fyra vapen.'},
     beard:{name:'Lösskägg från kommunförrådet',slot:'outfit',cost:180,description:'Ett rejält grått skägg. Gäller hela stallet.'},
     vest:{name:'Varselväst för svartjobb',slot:'outfit',cost:450,description:'Självlysande gul med reflexband.'},
     flame:{name:'Svetsmask med eld i lacken',slot:'outfit',cost:900,description:'Svart mask, orange flammor. Kräver 5 segrar över Börje.',rival:5},
@@ -115,7 +117,7 @@
     sign49:{name:'49 – bygdens elräkning',slot:'decor',cost:5000,description:'En stor neonskylt på tomten. Kräver tre cuptitlar.',titles:3}
   };
   function catalogUnlocked(save,key) {
-    const item=CATALOG[key];return !!item&&(save.cup.titles>=(item.titles||0))&&(save.rivalWins[0]>=(item.rival||0));
+    const item=CATALOG[key];return !!item&&(!item.challenge||!!save.contracts[item.challenge])&&(save.cup.titles>=(item.titles||0))&&(save.rivalWins[0]>=(item.rival||0));
   }
   function buyCosmetic(save,key) {
     const item=CATALOG[key];
@@ -138,6 +140,11 @@
     }
   };
   const CONTRACTS = [
+    {id:'combatPotatoHits',mode:'combat',name:'Potatisgratäng med personskada',description:'Träffa rivaler 15 gånger med potatiskanonen och kör klart loppen',target:15,reward:150},
+    {id:'combatPodiums',mode:'combat',name:'Kronofogdens indrivare',description:'Ta 3 pallplatser i stridsläget',target:3,reward:180},
+    {id:'combatPeace',mode:'combat',name:'Kommunal vapenvägran',description:'Kör klart ett stridslopp utan att skjuta',target:1,reward:100},
+    {id:'combatTour',mode:'combat',once:true,cosmetic:'outlaw',name:'Besöksförbud i fem kommuner',description:'Kör klart alla 5 olika stridsbanor',target:5,reward:250},
+    {id:'combatArsenal',mode:'combat',once:true,cosmetic:'arsenal',name:'Svågerns arsenal',description:'Kör klart med alla 4 olika vapen',target:4,reward:200},
   {
     id:'races',name:'Arbetslinjen runt lagårn',description:'Kör klart 3 lopp',target:3,reward:45
   },
@@ -153,7 +160,7 @@
   ];
   function freshSave() {
     return {
-      weaponUpgrades:{},combatMastery:{},combatFinishes:0,owned:[],outfit:null,decor:null,build:'stock',cup:{stage:0,titles:0},rivalWins:[0,0,0,0],version:2,courseRevision:2,coins:0,xp:0,races:0,wins:0,corn:0,items:0,upgrades: {
+      combatPotatoHits:0,combatPodiums:0,combatPeace:0,combatTour:0,combatArsenal:0,combatTracksDone:[],combatWeaponsDone:[],weaponUpgrades:{},combatMastery:{},combatFinishes:0,owned:[],outfit:null,decor:null,build:'stock',cup:{stage:0,titles:0},rivalWins:[0,0,0,0],version:2,courseRevision:2,coins:0,xp:0,races:0,wins:0,corn:0,items:0,upgrades: {
         feed:0,boots:0,nest:0
       },medals: {
       },records: {
@@ -172,6 +179,10 @@
     const integer = (n, max=999999) => Number.isFinite(n) ? clamp(Math.floor(n),0,max) : 0;
     for (const key of ['coins','xp','races','wins','corn','items']) s[key]=integer(raw[key]);
     s.combatFinishes=integer(raw.combatFinishes);
+    for(const key of ['combatPotatoHits','combatPodiums','combatPeace'])s[key]=integer(raw[key]);
+    s.combatTracksDone=COMBAT_TRACKS.map(t=>t.id).filter(id=>Array.isArray(raw.combatTracksDone)&&raw.combatTracksDone.includes(id));
+    s.combatWeaponsDone=Object.keys(WEAPONS).filter(id=>Array.isArray(raw.combatWeaponsDone)&&raw.combatWeaponsDone.includes(id));
+    s.combatTour=s.combatTracksDone.length;s.combatArsenal=s.combatWeaponsDone.length;
     for(const weapon of Object.keys(WEAPONS))s.weaponUpgrades[weapon]={reload:integer(raw.weaponUpgrades?.[weapon]?.reload,3),recoil:integer(raw.weaponUpgrades?.[weapon]?.recoil,3)};
     if(WEAPONS[raw.selected?.weapon])s.selected.weapon=raw.selected.weapon;
     if(COMBAT_TRACKS.some(t=>t.id===raw.selected?.combatTrack))s.selected.combatTrack=raw.selected.combatTrack;
@@ -228,8 +239,9 @@
     const c=CONTRACTS.find(c=>c.id===key);
     if(!c) return 0;
     const claimed=save.contracts[key]||0;
-    if(save[key]<(claimed+1)*c.target) return 0;
+    if(c.once&&claimed||!Number.isFinite(save[key])||save[key]<(claimed+1)*c.target) return 0;
     save.contracts[key]=claimed+1;
+    if(c.cosmetic&&!save.owned.includes(c.cosmetic))save.owned.push(c.cosmetic);
     save.coins+=c.reward;
     return c.reward;
   }
@@ -461,6 +473,7 @@
   function fireShot(r,a) {
     const gun=a.gun,w=WEAPONS[gun.weapon];
     if(gun.cooldown>0||gun.reload>0||gun.ammo<=0||a.finishTime!==null)return false;
+    if(a.id===0)r.combatShots=(r.combatShots||0)+1;
     gun.ammo--;gun.cooldown=w.cooldown;gun.flash=.12;
     if(!gun.ammo)startReload(r,a);
     const dx=Math.cos(gun.aim),dy=Math.sin(gun.aim);
@@ -538,6 +551,7 @@
           for(let i=0;i<16;i++){const angle=i*Math.PI/8;r.particles.push({x:bullet.x,y:bullet.y,vx:Math.cos(angle)*65,vy:Math.sin(angle)*65,life:.6,max:.6,color:'#d6bd78'});}
           for(const a of r.actors){const dx=a.x-bullet.x,dy=a.y-bullet.y,d=Math.hypot(dx,dy);if(d>38||a.invulnerable>0||a.finishTime!==null)continue;
             a.invulnerable=1.5;if(a.shield>0){a.shield=0;continue;}
+            if(bullet.owner===0&&a.id!==0)r.combatPotatoHits=(r.combatPotatoHits||0)+1;
             // Scatter across the road, never give a hit racer a forward boost.
             const heading=pointAt(r.track,project(r.track,a.x,a.y).along).angle;
             const fx=Math.cos(heading),fy=Math.sin(heading),nx=-fy,ny=fx;
@@ -853,6 +867,12 @@
       save.combatMastery=save.combatMastery||{};
       save.combatMastery[weapon]=Math.min(9999,(save.combatMastery[weapon]||0)+1);
       save.combatFinishes=(save.combatFinishes||0)+1;
+      save.combatPotatoHits+=r.combatPotatoHits||0;
+      save.combatPodiums+=result.position<=3?1:0;
+      save.combatPeace+=r.combatShots?0:1;
+      if(!save.combatTracksDone.includes(r.track.id))save.combatTracksDone.push(r.track.id);
+      if(!save.combatWeaponsDone.includes(weapon))save.combatWeaponsDone.push(weapon);
+      save.combatTour=save.combatTracksDone.length;save.combatArsenal=save.combatWeaponsDone.length;
       result.mastery=save.combatMastery[weapon];
     }
     if(!trial&&!r.combat) {
