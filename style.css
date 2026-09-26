@@ -1394,3 +1394,5 @@
 .mobile-racing #race-screen {max-width:none;max-height:none;}
 .mobile-racing .touch-controls {background:transparent;border:0;padding:0;}
 @media(orientation:portrait){.mobile-racing .touch-actions{bottom:calc(165px + env(safe-area-inset-bottom,0px));}}
+
+.combat-cup-panel {grid-column:1 / -1;border-top:8px solid #a34432;background:#f2e5be;}

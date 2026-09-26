@@ -130,3 +130,14 @@ Avslutade vanliga lopp och stridslopp ger 60 grundmynt, placeringsbonus (45/34/2
 ### Skuldbokens stridsuppdrag
 
 Stridsläget har en egen avdelning med återkommande belöningar: 15 potatisträffar på rivaler (150 mynt), tre pallplatser (180) och en målgång utan avlossade skott (100). Framsteg bokförs först vid målgång. Sköldblockeringar och självträffar räknas inte. Alla fem olika stridsbanor ger en gång 250 mynt och Besöksförbudets guldväst; alla fyra olika vapen ger en gång 200 mynt och Svågerns patronbälte. Belöningarna kvitteras i skuldboken och styling väljs sedan gratis i Hönstema. Äldre sparningar behåller sin progression, men nya uppdrag räknar från uppdateringen.
+
+
+### Vägval, rivaler och Kronofogdecupen
+
+Alla stridsbanor har en markerad innerpassage genom första stora kurvan. Den är körbar och syns på minimappen. Dekor och publik håller sig utanför passagen. Var fjortonde sekund varnas ett hinder i två sekunder och påverkar sedan innerlinjen i fyra sekunder: bilvrak, vält marknadsstånd, ånga, timmer eller trasigt dansgolv. På andra varvet flyttar händelsen längre fram. Huvudvägen förblir öppen.
+
+Börje försvarar sig bakåt, Pirjo söker myntlinjen och skjuter mer sällan, Ronny tar innerpassagen och Siv söker närkontakt. De använder samma grundfysik som spelaren. Vakthunden reagerar även när cross 49 passerar nära.
+
+Kött och krut erbjuder fyra gratis stridsbyggen: standard, pansar (40 % kortare vapenslöhet / 8 % lägre fart), magasin (+2 skott / 35 % längre omladdning) och övertryck (+25 % explosionsradie och projektilknuff / 40 % egen rekyl). Ett bygge åt gången, inga effekter i gårdslopp eller tidsträning.
+
+Kronofogdecupen startas separat i Kött och krut. Fem etapper, 10/7/5/3/1 poäng per placering, sparad ställning. Finalrivalerna har pansar eller övertryck. Vinst inklusive delad förstaplats ger 500 extra mynt och en titel; övriga får 200. Mellan etapperna väljs gratis trim, sparande eller en engångssköld för 60 mynt. Vanliga stridslopp påverkar inte cupen.

@@ -135,3 +135,35 @@ console.log('PASS guard dog warning, crossing, braking and pause.');
  const bad=C.sanitizeSave({combatTracksDone:['fair','fair','bogus'],combatWeaponsDone:['potato','potato'],combatPotatoHits:-3});assert.equal(bad.combatTour,1);assert.equal(bad.combatArsenal,1);assert.equal(bad.combatPotatoHits,0);
 }
 console.log('PASS combat ledger rewards, one-time styling, repeat jobs, duplicate settlement and migration.');
+// Alternative builds are real tradeoffs and stay out of ordinary racing.
+{
+ const s=C.freshSave();s.combatRig='magazine';
+ const r=C.makeRace({mode:'combat',weapon:'shotgun'},s),a=r.actors[0];
+ assert.equal(a.gun.ammo,4);assert.equal(C.gunCapacity(a.gun),4);
+ for(let i=0;i<4;i++){a.gun.cooldown=0;C.fireShot(r,a);}assert.ok(Math.abs(a.gun.reload-2.3*1.35)<1e-8);
+ assert.equal(C.makeRace({mode:'race'},s).actors[0].gun.rig,'stock');
+ assert.equal(C.sanitizeSave({combatRig:'bogus'}).combatRig,'stock');
+}
+// Cup stages pay once, persist standings, and ordinary combat does not advance them.
+{
+ let s=C.freshSave();s.combatCup.active=true;
+ const finish=(championship)=>{const r=C.makeRace({mode:'combat',championship,combatTrack:'fair'},s);r.phase='finished';r.result={coins:80,position:1,time:80,bestLap:40};r.actors[0].finishTime=80;C.settleRace(s,r);return r;};
+ finish(false);assert.equal(s.combatCup.stage,0);
+ for(let i=0;i<5;i++){assert.equal(s.combatCup.stage,i);const r=finish(true);assert.equal(r.track.id,C.COMBAT_TRACKS[i].id);assert.equal(C.settleRace(s,r),null);s=C.sanitizeSave(JSON.parse(JSON.stringify(s)));}
+ assert.equal(s.combatCup.active,false);assert.equal(s.combatCup.titles,1);assert.equal(s.combatCup.scores[0],50);assert.equal(s.coins,980);
+}
+for(const t of C.COMBAT_TRACKS){
+ const r=C.makeRace({mode:'combat',combatTrack:t.id},C.freshSave()),e=r.routeEvent,a=r.actors[0];
+ assert.ok(C.shortcutWidth(r.track,r.track.length*.205)>40);assert.equal(C.shortcutWidth(r.track,r.track.length*.5),0);
+ r.time=7;C.updateRouteEvent(r,0);assert.equal(e.state,'warning');Object.assign(a,{x:e.x,y:e.y,slow:0});C.updateRouteEvent(r,.01);assert.equal(a.slow,0);
+ r.time=9;Object.assign(a,{vx:80,boost:2});C.updateRouteEvent(r,.01);assert.equal(e.state,'active');assert.equal(a.boost,0);assert.equal(a.vx,20);
+ const x=e.x,y=e.y;a.lap=1;C.updateRouteEvent(r,.01);assert.ok(Math.hypot(e.x-x,e.y-y)>20);
+ r.phase='paused';const before=JSON.stringify(e);C.tick(r,{},1);assert.equal(JSON.stringify(e),before);
+}
+console.log('PASS build tradeoffs, cup persistence and rewards, and per-lap bypass events.');
+for(const def of C.COMBAT_TRACKS){
+ const r=C.makeRace({mode:'combat',combatTrack:def.id,difficulty:'easy'},C.freshSave());r.countdown=0;r.phase='racing';let steps=0,used=false;
+ while(r.phase!=='finished'&&steps++<240*120){const p=r.actors[0],d=p.along+20,extra=C.shortcutWidth(r.track,d),target=C.pointAt(r.track,d,extra>0?r.track.width+extra-20:18);C.tick(r,{x:target.x-p.x,y:target.y-p.y},1/120);const projection=C.project(r.track,p.x,p.y);if(projection.distance>r.track.width+8)used=true;}
+ assert.equal(r.phase,'finished',def.id+' inner route must preserve lap progression');assert.ok(used,def.id+' bypass can actually be reached');
+}
+console.log('PASS all five bypasses are traversable and retain ordered lap progression.');

@@ -133,11 +133,19 @@
   }
   function renderArmory(){
     $('weapon-cards').replaceChildren();
+    const cup=save.combatCup;
+    const panel=document.createElement('article');panel.className='catalog-product combat-cup-panel';
+    panel.innerHTML=`<h3>Kronofogdecupen</h3><p>Fem banor. Final mot Kronofogdens bepansrade insatsstyrka. 10/7/5/3/1 poäng per placering. Vinn cupen för 500 extra mynt, annars 200. Delad förstaplats räknas som seger.</p><p>${cup.active?`Nästa etapp ${cup.stage+1}/5: ${C.COMBAT_TRACKS[cup.stage].short}`:'Starta en ny cup när du vill.'} · Titlar: ${cup.titles}</p><p>${['Du',...C.RIVALS.map(r=>r.name)].map((n,i)=>n+': '+cup.scores[i]).join(' · ')}</p><button class="secondary cup-start">${cup.active?'Kör nästa cupetapp':'Starta stridsmästerskap'}</button><p>Inför nästa etapp: byt trim gratis, spara mynten eller köp en sköld som tar en smäll.</p><button class="secondary cup-service" ${!cup.active||cup.service||save.coins<60?'disabled':''}>${cup.service?'Sköld packad':'Svågerns fältservice · 60 mynt'}</button>`;
+    panel.querySelector('.cup-start').onclick=()=>{if(!cup.active){cup.active=true;cup.stage=0;cup.scores=[0,0,0,0,0];cup.service=false;}selected.mode='combat';selected.combatTrack=C.COMBAT_TRACKS[cup.stage].id;persist();startRace(true);};
+    panel.querySelector('.cup-service').onclick=()=>{if(cup.active&&!cup.service&&save.coins>=60){save.coins-=60;cup.service=true;persist();renderWallet();renderArmory();}};
+    $('weapon-cards').append(panel);
+    for(const [key,rig] of Object.entries(C.COMBAT_RIGS)){const card=document.createElement('article');card.className='catalog-product';card.innerHTML=`<h3>${rig.name}</h3><p>${rig.description}</p><small>Gratis stridsbygge · ett åt gången · bara stridsläget</small><button class="secondary" aria-pressed="${save.combatRig===key}">${save.combatRig===key?'Monterat':'Montera'}</button>`;card.querySelector('button').onclick=()=>{save.combatRig=key;persist();renderArmory();};$('weapon-cards').append(card);}
+
     const copy={shotgun:'Bred knuff på nära håll. Två patroner, sedan får du stå för fiolerna.',pistol:'Lätt att bära. Snabba skott tömmer rivalens spurt, men knuffar svagt.',rifle:'Långa skott bryter boost. Tung att bära och sparkar som en obesiktigad älg.',potato:'Långsam potatis, stor mosfläck. Bromsar alla i närheten — även leverantören.'};
     for(const [key,w] of Object.entries(C.WEAPONS)){
       const card=document.createElement('article'),active=(selected.weapon||'shotgun')===key,up=save.weaponUpgrades?.[key]||{},runs=save.combatMastery?.[key]||0,mastery=Math.min(3,Math.floor(runs/3));
       card.className='catalog-product weapon-product'+(active?' equipped':'');
-      card.innerHTML=`<span class="catalog-edition">ART. 049-${Object.keys(C.WEAPONS).indexOf(key)+1} / LAGÅRDSKLASS</span><canvas width="160" height="70" aria-hidden="true"></canvas><h3>${w.name}</h3><p>${copy[key]}</p><dl class="weapon-spec"><div><dt>Magasin</dt><dd>${w.ammo} skott</dd></div><div><dt>Omladdning</dt><dd>${(w.reload*(1-mastery*.06-(up.reload||0)*.05)).toFixed(2)} s</dd></div><div><dt>Egen rekyl</dt><dd>${Math.round(w.recoil*(1-(up.recoil||0)*.12))}</dd></div></dl><button class="secondary weapon-equip" aria-pressed="${active}">${active?'✓ Packad till loppet':'Välj vapen · gratis'}</button><p class="weapon-mastery">MÄSTERSKAP ${mastery}/3 · ${runs} målgångar<br><small>${mastery===3?'Fullärd byfåne. −18 % omladdning.':`${3-runs%3} lopp till nästa nivå · −6 % omladdning/nivå`}</small></p><div class="weapon-tuning"></div>`;
+      card.innerHTML=`<span class="catalog-edition">ART. 049-${Object.keys(C.WEAPONS).indexOf(key)+1} / LAGÅRDSKLASS</span><canvas width="160" height="70" aria-hidden="true"></canvas><h3>${w.name}</h3><p>${copy[key]}</p><dl class="weapon-spec"><div><dt>Magasin</dt><dd>${w.ammo+C.COMBAT_RIGS[save.combatRig].mag} skott</dd></div><div><dt>Omladdning</dt><dd>${(w.reload*(1-mastery*.06-(up.reload||0)*.05)*C.COMBAT_RIGS[save.combatRig].reload).toFixed(2)} s</dd></div><div><dt>Egen rekyl</dt><dd>${Math.round(w.recoil*(1-(up.recoil||0)*.12)*C.COMBAT_RIGS[save.combatRig].recoil)}</dd></div></dl><button class="secondary weapon-equip" aria-pressed="${active}">${active?'✓ Packad till loppet':'Välj vapen · gratis'}</button><p class="weapon-mastery">MÄSTERSKAP ${mastery}/3 · ${runs} målgångar<br><small>${mastery===3?'Fullärd byfåne. −18 % omladdning.':`${3-runs%3} lopp till nästa nivå · −6 % omladdning/nivå`}</small></p><div class="weapon-tuning"></div>`;
       card.querySelector('.weapon-equip').onclick=()=>{selected.weapon=key;persist();modeCopy();renderArmory();audio.play('click');};
       for(const [type,u] of Object.entries(C.WEAPON_UPGRADES)){
         const level=up[type]||0,cost=u.cost[level],row=document.createElement('div');row.className='weapon-upgrade';
@@ -268,7 +276,8 @@
     audio.setTheme('farm');
     schedule();
   }
-  function startRace() {
+  function startRace(championship=false) {
+    championship=championship===true;
     const t=C.TRACKS.find(t=>t.id===selected.track);
     if(!t||selected.mode!=='combat'&&t.unlock>save.races)return;
     audio.unlock();
@@ -278,7 +287,7 @@
     queuedItem=false;
     pausedPhase=null;
     document.querySelectorAll('dialog[open]').forEach(d=>d.close());
-    race=C.makeRace({...selected,weapon:selected.weapon,combatTrack:selected.combatTrack},save);
+    race=C.makeRace({...selected,championship,weapon:selected.weapon,combatTrack:selected.combatTrack},save);
     race.skin=save.skin;
     race.outfit=save.outfit;
     mouse.down=false;mouse.queued=false;mouse.reloadQueued=false;mouse.active=false;
@@ -323,6 +332,7 @@
     audio.play('finish');
     $('race-screen').classList.add('hidden');
     $('results').classList.remove('hidden');
+    setText('restart-button',race.options.championship?'Service & nästa etapp':'Kör igen');
     const trial=race.options.mode==='trial',p=race.actors[0];
     setText('result-title',trial?(result.newRecord?'Nytt personbästa!':'En fin träningsrunda.'):result.position===1?'Gårdens nya stolthet!':result.position<=3?'En plats på pallen!':'Varje runda räknas.');
     setText('result-copy',`${race.track.name} · ${trial?'Tidsträning':`${result.position}:a av 5 hönor`} ${result.newRecord?'· Nytt banrekord!':''}${trial?'':` · ${C.RIVALS[0].name}: ${save.rivalWins[0]>0?'Nästa gång tar jag fan traktorn.':C.RIVALS[0].quip}`}`);
@@ -362,7 +372,7 @@
     setText('stamina-label',p.stamina<.01?'VILA VINGARNA':'SPURT');
     setText('hud-time',C.formatTime(race.time));
     setText('hud-corn',race.corn);
-    if(race.combat){const w=C.WEAPONS[p.gun.weapon];setText('combat-status',p.gun.reload>0?`${w.name.toUpperCase()} · LADDAR ${p.gun.reload.toFixed(1)} s`:`${w.name.toUpperCase()} · M${p.gun.mastery} · ${p.gun.ammo}/${w.ammo} SKOTT · ${p.gun.rearFire>0?'BAKÅTSKYTTE −15 % FART':p.draft>.5?'SLIPSTREAM +9 %':touchMode.matches?'DRA HÖGER SPAK: SKJUT':'KLICK: SKJUT · R: LADDA'}`);}
+    if(race.combat){const w=C.WEAPONS[p.gun.weapon];setText('combat-status',p.gun.reload>0?`${w.name.toUpperCase()} · LADDAR ${p.gun.reload.toFixed(1)} s`:`${w.name.toUpperCase()} · M${p.gun.mastery} · ${p.gun.ammo}/${C.gunCapacity(p.gun)} SKOTT · ${p.gun.rearFire>0?'BAKÅTSKYTTE −15 % FART':p.draft>.5?'SLIPSTREAM +9 %':touchMode.matches?'DRA HÖGER SPAK: SKJUT':'KLICK: SKJUT · R: LADDA'}`);}
     setText('lap-time',C.formatTime(race.time-p.lapStart));
     $('stamina-fill').style.width=`${p.stamina/race.maxStamina*100}%`;
     const item= {
@@ -542,8 +552,8 @@
     });
   });
   $('start-button').onclick=startRace;
-  $('restart-button').onclick=startRace;
-  $('pause-restart-button').onclick=startRace;
+  $('restart-button').onclick=()=>{if(race?.options.championship){showHub('armory');}else startRace();};
+  $('pause-restart-button').onclick=()=>startRace(!!race?.options.championship);
   $('pause-button').onclick=()=>pauseRace();
   $('resume-button').onclick=resumeRace;
   $('pause-dialog').addEventListener('cancel',event=> {

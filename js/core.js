@@ -46,6 +46,14 @@
     {name:'Bygdekungen Ronny',speed:1.035,lane:.8,quip:'Jag äger den här grusvägen!'},
     {name:'Släpvagns-Siv',speed:.99,lane:1.4,quip:'Bromsar säljs separat, för helvete.'}
   ];
+  const COMBAT_RIGS={
+    stock:{name:'Original enligt annons',description:'Inga fördelar. Inga nya problem.',speed:1,armor:1,mag:0,reload:1,recoil:1,blast:1},
+    armor:{name:'Volvodörr från självplocken',description:'40 % kortare vapenslöhet, men 8 % lägre fart.',speed:.92,armor:.6,mag:0,reload:1,recoil:1,blast:1},
+    magazine:{name:'Familjepack från jaktlaget',description:'+2 patroner. Omladdningen tar 35 % längre tid.',speed:1,armor:1,mag:2,reload:1.35,recoil:1,blast:1},
+    hot:{name:'Övertryck enligt svågern',description:'25 % större potatisexplosion och 25 % mer knuff. 40 % mer egen rekyl, även farligare självträffar.',speed:1,armor:1,mag:0,reload:1,recoil:1.4,blast:1.25}
+  };
+  function gunCapacity(gun){return WEAPONS[gun.weapon].ammo+(COMBAT_RIGS[gun.rig]?.mag||0);}
+  function shortcutWidth(track,along){const f=along/track.length;return track.combat&&f>.13&&f<.28?Math.sin((f-.13)/.15*Math.PI)*48:0;}
   const BUILDS={
     stock:{name:'Besiktigad av morsan',description:'Standardbygge. Inga extra nackdelar.',speed:1,grip:1,stamina:0,recovery:1,armor:1,unlock:0},
     chip:{name:'Svågerns fulchip',description:'+8 % fart, −25 % styrgrepp. Inga kvitton.',speed:1.08,grip:.75,stamina:0,recovery:1,armor:1,unlock:0},
@@ -160,7 +168,7 @@
   ];
   function freshSave() {
     return {
-      combatPotatoHits:0,combatPodiums:0,combatPeace:0,combatTour:0,combatArsenal:0,combatTracksDone:[],combatWeaponsDone:[],weaponUpgrades:{},combatMastery:{},combatFinishes:0,owned:[],outfit:null,decor:null,build:'stock',cup:{stage:0,titles:0},rivalWins:[0,0,0,0],version:2,courseRevision:2,coins:0,xp:0,races:0,wins:0,corn:0,items:0,upgrades: {
+      combatRig:'stock',combatCup:{active:false,stage:0,scores:[0,0,0,0,0],titles:0,service:false},combatPotatoHits:0,combatPodiums:0,combatPeace:0,combatTour:0,combatArsenal:0,combatTracksDone:[],combatWeaponsDone:[],weaponUpgrades:{},combatMastery:{},combatFinishes:0,owned:[],outfit:null,decor:null,build:'stock',cup:{stage:0,titles:0},rivalWins:[0,0,0,0],version:2,courseRevision:2,coins:0,xp:0,races:0,wins:0,corn:0,items:0,upgrades: {
         feed:0,boots:0,nest:0
       },medals: {
       },records: {
@@ -179,6 +187,8 @@
     const integer = (n, max=999999) => Number.isFinite(n) ? clamp(Math.floor(n),0,max) : 0;
     for (const key of ['coins','xp','races','wins','corn','items']) s[key]=integer(raw[key]);
     s.combatFinishes=integer(raw.combatFinishes);
+    if(COMBAT_RIGS[raw.combatRig])s.combatRig=raw.combatRig;
+    s.combatCup={active:raw.combatCup?.active===true,stage:integer(raw.combatCup?.stage,4),scores:Array.from({length:5},(_,i)=>integer(raw.combatCup?.scores?.[i],50)),titles:integer(raw.combatCup?.titles),service:raw.combatCup?.service===true};
     for(const key of ['combatPotatoHits','combatPodiums','combatPeace'])s[key]=integer(raw[key]);
     s.combatTracksDone=COMBAT_TRACKS.map(t=>t.id).filter(id=>Array.isArray(raw.combatTracksDone)&&raw.combatTracksDone.includes(id));
     s.combatWeaponsDone=Object.keys(WEAPONS).filter(id=>Array.isArray(raw.combatWeaponsDone)&&raw.combatWeaponsDone.includes(id));
@@ -289,7 +299,7 @@
   }
   function rectangleClear(track,x,y,w,h,padding=5) {
     // Whole visual footprint, not only the trunk/anchor; conservative margin between samples.
-    for(let py=y-padding;py<=y+h+padding;py+=3) for(let px=x-padding;px<=x+w+padding;px+=3) if(project(track,px,py).distance<track.width+5) return false;
+    for(let py=y-padding;py<=y+h+padding;py+=3) for(let px=x-padding;px<=x+w+padding;px+=3)  {const p=project(track,px,py);if(p.distance<track.width+5+(p.side>0?shortcutWidth(track,p.along):0))return false;}
     return true;
   }
   function roadWidth(track,along) {
@@ -467,7 +477,7 @@
     save.coins-=cost;save.weaponUpgrades[weapon][type]=level+1;return true;
   }
   function startReload(r,a) {
-    a.gun.reload=WEAPONS[a.gun.weapon].reload*(1-(a.gun.mastery||0)*.06-(a.gun.tuning?.reload||0)*.05);
+    a.gun.reload=WEAPONS[a.gun.weapon].reload*(1-(a.gun.mastery||0)*.06-(a.gun.tuning?.reload||0)*.05)*(COMBAT_RIGS[a.gun.rig]?.reload||1);
     if(a.id===0)r.events.push({name:'reload-start',weapon:a.gun.weapon});
   }
   function fireShot(r,a) {
@@ -477,7 +487,7 @@
     gun.ammo--;gun.cooldown=w.cooldown;gun.flash=.12;
     if(!gun.ammo)startReload(r,a);
     const dx=Math.cos(gun.aim),dy=Math.sin(gun.aim);
-    const recoil=w.recoil*(1-(gun.tuning?.recoil||0)*.12);
+    const recoil=w.recoil*(COMBAT_RIGS[gun.rig]?.recoil||1)*(1-(gun.tuning?.recoil||0)*.12);
     const speed=Math.hypot(a.vx,a.vy),fx=speed>5?a.vx/speed:Math.cos(a.angle),fy=speed>5?a.vy/speed:Math.sin(a.angle);
     let rx=-dx*recoil,ry=-dy*recoil;
     if(dx*fx+dy*fy<-.0001){
@@ -489,7 +499,7 @@
     a.hitPushX+=rx;a.hitPushY+=ry;
     for(let i=0;i<w.pellets;i++){
       const angle=gun.aim+(i-(w.pellets-1)/2)*w.spread;
-      r.bullets.push({x:a.x+dx*12,y:a.y+dy*12,vx:Math.cos(angle)*w.speed,vy:Math.sin(angle)*w.speed,life:w.life,push:w.push,weapon:gun.weapon,owner:a.id});
+      r.bullets.push({x:a.x+dx*12,y:a.y+dy*12,vx:Math.cos(angle)*w.speed,vy:Math.sin(angle)*w.speed,life:w.life,push:w.push*(COMBAT_RIGS[gun.rig]?.blast||1),blast:COMBAT_RIGS[gun.rig]?.blast||1,weapon:gun.weapon,owner:a.id});
     }
     const player=r.actors[0],distance=Math.hypot(a.x-player.x,a.y-player.y);
     if(distance<240)r.events.push({name:gun.weapon,volume:a.id===0?1:Math.max(.1,.55*(1-distance/240)),pan:clamp((a.x-player.x)/180,-1,1)});
@@ -505,6 +515,7 @@
       h.state=phase<5?'idle':phase<7?'warning':phase<9?'active':'idle';h.warning=phase>=5&&phase<7?(phase-5)/2:0;
       const lane=['press','hunter','steam'].includes(h.kind)?-12:h.state==='active'?-r.track.width-12+(phase-7)*(r.track.width+12): -r.track.width-12;
       const pos=pointAt(r.track,r.track.length*h.fraction,lane);h.x=pos.x;h.y=pos.y;h.angle=pos.angle;
+      if(h.kind==='dog'&&h.state==='idle'&&r.cross&&Math.hypot(r.cross.x-h.x,r.cross.y-h.y)<100){const away=pointAt(r.track,r.track.length*h.fraction,-r.track.width-25);h.x=away.x+Math.cos(r.time*10)*5;h.y=away.y+Math.sin(r.time*10)*5;h.chasing=true;}else h.chasing=false;
       if(h.state==='warning'&&old!=='warning'&&Math.hypot(h.x-r.actors[0].x,h.y-r.actors[0].y)<250)notify(r,'count',h.kind==='hunter'?'JAKTLAGET SIKTAR! Ta ytterspåret.':h.kind==='steam'?'PANNAN VISSLAR! Håll undan från ångan.':h.kind==='press'?'BILPRESSEN STÄNGER! Ta ytterspåret.':h.kind==='dog'?'VAKTHUNDEN ÄR LÖS! Håll undan.':h.kind==='rooster'?'PRISTUPPEN LADDAR! Lämna plats.':'POTATISVAGN PÅ RYMMEN!');
       if(h.kind==='hunter'&&h.state==='active'&&old!=='active'&&Math.hypot(h.x-r.actors[0].x,h.y-r.actors[0].y)<260)r.events.push({name:'shotgun',volume:.55});
       for(const a of r.actors){h.cooldowns[a.id]=Math.max(0,(h.cooldowns[a.id]||0)-dt);
@@ -515,19 +526,28 @@
       }
     }
   }
+  function updateRouteEvent(r,dt){
+    const e=r.routeEvent,phase=r.time%14,old=e.state;
+    e.state=phase<6?'idle':phase<8?'warning':phase<12?'active':'idle';e.drop=e.state==='active'?Math.max(0,1-(phase-8)/.3):0;
+    const fraction=r.actors[0].lap===0?.205:.245,p=pointAt(r.track,r.track.length*fraction,r.track.width+shortcutWidth(r.track,r.track.length*fraction)-17);
+    Object.assign(e,p);e.radius=17;
+    if(e.state==='warning'&&old!=='warning')notify(r,'count',({scrapyard:'KRANEN SLÄPPER! Vrak på självplockens innerlinje.',fair:'AKTA KNALLEN! Ståndet välter över genvägen.',peat:'PANNAN SPRICKER! Ånga över dunkstigen.',airstrip:'TIMMER PÅ VIFT! Ta den breda vägen.',park:'DANSGOLVET GER VIKA! Håll ytterspåret.'})[r.track.id]);
+    for(const a of r.actors){e.cooldowns[a.id]=Math.max(0,(e.cooldowns[a.id]||0)-dt);if(e.state!=='active'||a.finishTime!==null||e.cooldowns[a.id]||Math.hypot(a.x-e.x,a.y-e.y)>e.radius+5)continue;e.cooldowns[a.id]=2;if(a.shield>0)a.shield=0;else{a.vx*=.25;a.vy*=.25;a.slow=1;a.boost=0;if(a.id===0)r.bumps++;}}
+    if(r.time%18<dt&&r.crowd?.length)notify(r,'count',({fair:'Knallarna bråkar om sista korven!',scrapyard:'Vakthunden: GRRR! 49, lämna skrotgården!',peat:'Dunk-Doris: Vem fan har spätt ut kommunvattnet?',airstrip:'Jaktlaget siktar. Ingen vet på vad.',park:'Sista dansen! Någon har pantsatt scenen.'})[r.track.id]);
+  }
   function updateCombat(r,input,dt) {
     for(const a of r.actors) {
       const gun=a.gun;a.invulnerable=Math.max(0,a.invulnerable-dt);a.bumpCooldown=Math.max(0,a.bumpCooldown-dt);
       gun.rearFire=Math.max(0,(gun.rearFire||0)-dt);gun.cooldown=Math.max(0,gun.cooldown-dt);gun.flash=Math.max(0,gun.flash-dt);
-      if(gun.reload>0){gun.reload=Math.max(0,gun.reload-dt);if(gun.reload===0){gun.ammo=WEAPONS[gun.weapon].ammo;if(a.id===0)r.events.push('reload');}}
+      if(gun.reload>0){gun.reload=Math.max(0,gun.reload-dt);if(gun.reload===0){gun.ammo=gunCapacity(gun);if(a.id===0)r.events.push('reload');}}
       if(a.id===0){
         if(Number.isFinite(input.aimX)&&Number.isFinite(input.aimY))gun.aim=Math.atan2(input.aimY-a.y,input.aimX-a.x);
-        if(input.reload&&gun.ammo<WEAPONS[gun.weapon].ammo&&gun.reload===0)startReload(r,a);
+        if(input.reload&&gun.ammo<gunCapacity(gun)&&gun.reload===0)startReload(r,a);
         if(input.fire)fireShot(r,a);
       } else {
         const target=r.actors.filter(b=>b.id!==a.id&&b.finishTime===null).sort((b,c)=>Math.hypot(b.x-a.x,b.y-a.y)-Math.hypot(c.x-a.x,c.y-a.y))[0];
         if(target){const goal=Math.atan2(target.y-a.y,target.x-a.x),delta=Math.atan2(Math.sin(goal-gun.aim),Math.cos(goal-gun.aim));gun.aim+=clamp(delta,-dt*2.5,dt*2.5);
-          if(r.time>3+ a.id*.4&&Math.hypot(target.x-a.x,target.y-a.y)<115&&Math.abs(delta)<.15)fireShot(r,a);
+          if((a.id!==1||Math.cos(goal-a.angle)<0)&&(a.id!==2||Math.floor(r.time)%5===0)&&r.time>3+ a.id*.4&&Math.hypot(target.x-a.x,target.y-a.y)<115&&Math.abs(delta)<.15)fireShot(r,a);
         }
       }
       const behind=r.actors.some(b=>b!==a&&b.finishTime===null&&Math.hypot(b.x-a.x,b.y-a.y)<65&&Math.hypot(b.x-a.x,b.y-a.y)>18&&((b.x-a.x)*Math.cos(a.angle)+(b.y-a.y)*Math.sin(a.angle))>20&&Math.abs((b.x-a.x)*Math.sin(a.angle)-(b.y-a.y)*Math.cos(a.angle))<12);
@@ -549,7 +569,7 @@
           bullet.life=0;r.puddles.push({x:bullet.x,y:bullet.y,kind:'potato',radius:19,life:4});
           const player=r.actors[0];if(Math.hypot(player.x-bullet.x,player.y-bullet.y)<260)r.events.push('potato-hit');
           for(let i=0;i<16;i++){const angle=i*Math.PI/8;r.particles.push({x:bullet.x,y:bullet.y,vx:Math.cos(angle)*65,vy:Math.sin(angle)*65,life:.6,max:.6,color:'#d6bd78'});}
-          for(const a of r.actors){const dx=a.x-bullet.x,dy=a.y-bullet.y,d=Math.hypot(dx,dy);if(d>38||a.invulnerable>0||a.finishTime!==null)continue;
+          for(const a of r.actors){const dx=a.x-bullet.x,dy=a.y-bullet.y,d=Math.hypot(dx,dy);if(d>38*(bullet.blast||1)||a.invulnerable>0||a.finishTime!==null)continue;
             a.invulnerable=1.5;if(a.shield>0){a.shield=0;continue;}
             if(bullet.owner===0&&a.id!==0)r.combatPotatoHits=(r.combatPotatoHits||0)+1;
             // Scatter across the road, never give a hit racer a forward boost.
@@ -559,7 +579,7 @@
             const backwards=Math.min(0,a.hitPushX*fx+a.hitPushY*fy)-25;
             a.hitPushX=nx*sideways+fx*backwards;a.hitPushY=ny*sideways+fy*backwards;
             a.vx*=.35;a.vy*=.35;a.speed=Math.hypot(a.vx,a.vy);
-            a.slow=Math.max(a.slow,1.2);a.boost=0;a.cornerBoost=0;a.driftCharge=0;
+            a.slow=Math.max(a.slow,1.2*(COMBAT_RIGS[a.gun.rig]?.armor||1));a.boost=0;a.cornerBoost=0;a.driftCharge=0;
             if(a.id===0)r.bumps++;if(Math.hypot(a.x-player.x,a.y-player.y)<240)r.events.push({name:'cluck',volume:a.id===0?1:.5});
           }
         }
@@ -570,7 +590,7 @@
         bullet.life=0;if(a.invulnerable>0)break;
         a.invulnerable=1.5;
         if(a.shield>0)a.shield=0;
-        else {const distance=Math.hypot(a.x-r.actors[0].x,a.y-r.actors[0].y);if(distance<240)r.events.push({name:'cluck',volume:a.id===0?1:.65*(1-distance/240),pan:clamp((a.x-r.actors[0].x)/180,-1,1)});a.hitPushX+=bullet.vx*(bullet.push??.22);a.hitPushY+=bullet.vy*(bullet.push??.22);a.slow=WEAPONS[bullet.weapon||'shotgun'].slow;if(bullet.weapon==='pistol')a.stamina=Math.max(0,a.stamina-.6);else a.boost=0;if(a.id===0){r.bumps++;r.events.push('bump');}}
+        else {const distance=Math.hypot(a.x-r.actors[0].x,a.y-r.actors[0].y);if(distance<240)r.events.push({name:'cluck',volume:a.id===0?1:.65*(1-distance/240),pan:clamp((a.x-r.actors[0].x)/180,-1,1)});a.hitPushX+=bullet.vx*(bullet.push??.22);a.hitPushY+=bullet.vy*(bullet.push??.22);a.slow=WEAPONS[bullet.weapon||'shotgun'].slow*(COMBAT_RIGS[a.gun.rig]?.armor||1);if(bullet.weapon==='pistol')a.stamina=Math.max(0,a.stamina-.6);else a.boost=0;if(a.id===0){r.bumps++;r.events.push('bump');}}
         for(let i=0;i<5;i++)r.particles.push({x:a.x,y:a.y-8,vx:(i-2)*20,vy:-25+i*8,life:.45,max:.45,color:'#fff0cd'});
         break;
       }
@@ -585,6 +605,7 @@
       options.chicken='greta';
       options.difficulty='easy';
     }
+    if(options.mode==='combat'&&options.championship&&save.combatCup.active)options.combatTrack=COMBAT_TRACKS[save.combatCup.stage].id;
     const def=options.mode==='combat'?(COMBAT_TRACKS.find(t=>t.id===options.combatTrack)||COMBAT_TRACK):TRACKS.find(t=>t.id===options.track)||TRACKS[0],track=buildTrack(def);
     const c=CHARACTERS[options.chicken]||CHARACTERS.greta,trial=options.mode==='trial',up=trial? {
       feed:0,boots:0,nest:0
@@ -600,7 +621,7 @@
       const pos=pointAt(track,-18-Math.floor(i/2)*14,(i%2?1:-1)*7);
       const weapon=i?['shotgun','pistol','rifle','potato'][i-1]:(WEAPONS[options.weapon]?options.weapon:'shotgun');
       return {
-        ...pos,gun:{weapon,tuning:i?{}:{...save.weaponUpgrades?.[weapon]},mastery:i?0:Math.min(3,Math.floor((save.combatMastery?.[weapon]||0)/3)),ammo:WEAPONS[weapon].ammo,reload:0,cooldown:0,aim:pos.angle,flash:0},invulnerable:0,hitPushX:0,hitPushY:0,draft:0,bumpCooldown:0,id:i,name:i?RIVALS[i-1].name:c.short,color:i?['','rust','sage','lilac','brown'][i]:c.color,vx:0,vy:0,speed:0,along:track.length-18-Math.floor(i/2)*14,lastAlong:track.length-18-Math.floor(i/2)*14,travel:0,startDistance:18+Math.floor(i/2)*14,progress:0,checkpoint:0,lap:0,lapStart:0,laps:[],finishTime:null,slow:0,boost:0,shield:0,item:!i&&options.chicken==='agnes'&&!trial?'boost':null,cooldown:0,stamina:c.stamina+up.nest*.4+build.stamina,aiLane:(i%2?1:-1)*(5+i),aiSpeed:( {
+        ...pos,gun:{weapon,rig:!i&&def.combat?save.combatRig:options.championship&&save.combatCup.stage===4?(i%2?'armor':'hot'):'stock',tuning:i?{}:{...save.weaponUpgrades?.[weapon]},mastery:i?0:Math.min(3,Math.floor((save.combatMastery?.[weapon]||0)/3)),ammo:WEAPONS[weapon].ammo+(!i&&def.combat?COMBAT_RIGS[save.combatRig].mag:0),reload:0,cooldown:0,aim:pos.angle,flash:0},invulnerable:0,hitPushX:0,hitPushY:0,draft:0,bumpCooldown:0,id:i,name:i?(options.championship&&save.combatCup.stage===4?['','Fogde-Börje','Kvitto-Pirjo','Utmätar-Ronny','Inkasso-Siv'][i]:RIVALS[i-1].name):c.short,color:i?['','rust','sage','lilac','brown'][i]:c.color,vx:0,vy:0,speed:0,along:track.length-18-Math.floor(i/2)*14,lastAlong:track.length-18-Math.floor(i/2)*14,travel:0,startDistance:18+Math.floor(i/2)*14,progress:0,checkpoint:0,lap:0,lapStart:0,laps:[],finishTime:null,slow:0,boost:0,shield:!i&&options.championship&&save.combatCup.service?999:0,item:!i&&options.chicken==='agnes'&&!trial?'boost':null,cooldown:0,stamina:c.stamina+up.nest*.4+build.stamina,aiLane:(i%2?1:-1)*(5+i),aiSpeed:( {
           easy:62,normal:77,hard:87
         }
         [options.difficulty]||56)*(i?RIVALS[i-1].speed:1)
@@ -609,7 +630,7 @@
     return {
       track,options: {
         ...options
-      },combat:!!def.combat,courseHazards:makeCourseHazards(track),bullets:[],shotSerial:0,cover:def.combat?(def.id==='scrapyard'?[.38,.41,.44]:def.id==='fair'?[.12,.53,.83]:[.15,.38,.66]).map((f,i)=>({...pointAt(track,track.length*f,def.id==='scrapyard'?(i%2?14:-14):0),radius:def.id==='scrapyard'?15:12,kind:def.id==='scrapyard'?'wreck':def.id==='fair'?'stall':'crate'})):[],character:c,build,up,actors,time:0,countdown:3,phase:'countdown',countBeat:4,events:[],corn:0,usedItems:0,bumps:0,particles:[],feedback:trial?'Följ pilarna. Tre varv till mål!':`${RIVALS[save.races%4].name}: ${save.rivalWins?.[save.races%4]>0?'Nu jävlar blir det revansch!':RIVALS[save.races%4].quip}`,feedbackTime:3,lastLap:false,settled:false,result:null,
+      },combat:!!def.combat,courseHazards:makeCourseHazards(track),routeEvent:{state:'idle',cooldowns:{}},bullets:[],shotSerial:0,cover:def.combat?(def.id==='scrapyard'?[.38,.41,.44]:def.id==='fair'?[.12,.53,.83]:[.15,.38,.66]).map((f,i)=>({...pointAt(track,track.length*f,def.id==='scrapyard'?(i%2?14:-14):0),radius:def.id==='scrapyard'?15:12,kind:def.id==='scrapyard'?'wreck':def.id==='fair'?'stall':'crate'})):[],character:c,build,up,actors,time:0,countdown:3,phase:'countdown',countBeat:4,events:[],corn:0,usedItems:0,bumps:0,particles:[],feedback:options.championship&&save.combatCup.stage===4?'FINAL: Kronofogdens insatsstyrka! Pansar och övertryck i tjänsten.':trial?'Följ pilarna. Tre varv till mål!':`${RIVALS[save.races%4].name}: ${save.rivalWins?.[save.races%4]>0?'Nu jävlar blir det revansch!':RIVALS[save.races%4].quip}`,feedbackTime:3,lastLap:false,settled:false,result:null,
       ghost:trial?(save.ghosts?.[track.id]||null):null,
       trace:trial?[[0,actors[0].x,actors[0].y,actors[0].angle]]:[],traceNext:.2,
       pickups:Array.from( {
@@ -720,6 +741,7 @@
     r.time+=dt;
     updateCross(r,dt);
     updateTractor(r,dt);
+    if(r.combat)updateRouteEvent(r,dt);
     r.feedbackTime=Math.max(0,r.feedbackTime-dt);
     if(r.feedbackTime===0&&r.pendingFeedback){r.feedback=r.pendingFeedback;r.pendingFeedback=null;r.feedbackTime=5;}
     if(input.item)useItem(r);
@@ -733,13 +755,16 @@
       a.shield=Math.max(0,a.shield-dt);
       a.cooldown=Math.max(0,a.cooldown-dt);
       a.hitPushX*=Math.exp(-5*dt);a.hitPushY*=Math.exp(-5*dt);
-      let dx=0,dy=0,base=(isPlayer?r.character.speed*(1+r.up.feed*.03)*r.build.speed:a.aiSpeed)*(r.combat?WEAPONS[a.gun.weapon].mass:1);
+      let dx=0,dy=0,base=(isPlayer?r.character.speed*(1+r.up.feed*.03)*r.build.speed:a.aiSpeed)*(r.combat?WEAPONS[a.gun.weapon].mass*(COMBAT_RIGS[a.gun.rig]?.speed||1):1);
       if(isPlayer) {
         dx=input.x||0;
         dy=input.y||0;
       }
       else {
-        const target=pointAt(r.track,a.along+18,(r.combat?(a.id%2?22:-22):a.aiLane*RIVALS[a.id-1].lane*Math.sin(a.along/110+a.id)));
+        let lane=r.combat?(a.id===1?-25:a.id===3?Math.min(65,r.track.width+shortcutWidth(r.track,a.along)-10):18):a.aiLane*RIVALS[a.id-1].lane*Math.sin(a.along/110+a.id);
+        let target=pointAt(r.track,a.along+18,lane);
+        if(r.combat&&a.id===2){const coin=r.cornPoints?.find(p=>Math.hypot(p.x-a.x,p.y-a.y)<45&&((p.x-a.x)*Math.cos(a.angle)+(p.y-a.y)*Math.sin(a.angle))>10);if(coin)target=coin;}
+        if(r.combat&&a.id===4){const rival=r.actors.find(b=>b!==a&&b.finishTime===null&&Math.hypot(b.x-a.x,b.y-a.y)<32&&((b.x-a.x)*Math.cos(a.angle)+(b.y-a.y)*Math.sin(a.angle))>8);if(rival)target=rival;}
         dx=target.x-a.x;
         dy=target.y-a.y;
         // Telegraph an occasional AI dash; no teleporting or rubber-band speed boosts.
@@ -759,7 +784,7 @@
         if(a.stamina===0&&!a.exhausted)notify(r,'tired','Spurten är slut. Släpp spurtknappen för att vila.');
         a.exhausted=a.stamina===0;
       }
-      const offroad=road.distance>roadWidth(r.track,road.along)-2;
+      const offroad=road.distance>roadWidth(r.track,road.along)-2+(road.side>0?shortcutWidth(r.track,road.along):0);
       a.cornerBoost=Math.max(0,(a.cornerBoost||0)-dt);
       if(isPlayer) {
         const alignment=a.speed>1?(a.vx*dx+a.vy*dy)/a.speed:1;
@@ -779,7 +804,7 @@
       if(a.speed>3)a.angle=Math.atan2(a.vy,a.vx);
       // Soft shoulder, then a firm boundary. No shortcuts through the infield.
       const after=project(r.track,a.x,a.y);
-      const localWidth=roadWidth(r.track,after.along),shoulder=localWidth+(localWidth<r.track.width?1:8);
+      const localWidth=roadWidth(r.track,after.along),shoulder=localWidth+(localWidth<r.track.width?1:8)+(after.side>0?shortcutWidth(r.track,after.along):0);
       if(after.distance>shoulder) {
         const k=shoulder/after.distance;
         a.x=after.x+(a.x-after.x)*k;
@@ -862,6 +887,11 @@
       else delete save.ghosts[r.track.id];
     }
     if(r.combat){
+      if(r.options.championship&&save.combatCup.active&&r.track.id===COMBAT_TRACKS[save.combatCup.stage].id){
+        const cup=save.combatCup;ranking(r).forEach((a,i)=>cup.scores[a.id]+=[10,7,5,3,1][i]);cup.service=false;cup.stage++;
+        if(cup.stage===5){const won=cup.scores[0]===Math.max(...cup.scores);cup.active=false;cup.stage=0;if(won)cup.titles++;result.coins+=won?500:200;result.cupMessage=`Stridsmästerskapet klart! ${cup.scores[0]} poäng. ${won?'Kommunmästare! +500 mynt.':'Deltagarpant: +200 mynt.'}`;}
+        else result.cupMessage=`Stridsmästerskapet: ${cup.stage}/5 etapper · ${cup.scores[0]} poäng. Nästa: ${COMBAT_TRACKS[cup.stage].short}. Service och trim finns i Kött och krut.`;
+      }
       save.coins+=result.coins;
       const weapon=r.actors[0].gun.weapon;
       save.combatMastery=save.combatMastery||{};
@@ -906,7 +936,7 @@
     return {x:a[1]+(b[1]-a[1])*f,y:a[2]+(b[2]-a[2])*f,angle:b[3]};
   }
   const api= {
-    makeCourseHazards,updateCourseHazards,WEAPON_UPGRADES,buyWeaponUpgrade,WEAPONS,COMBAT_TRACKS,COMBAT_TRACK,fireShot,updateCombat,CATALOG,catalogUnlocked,buyCosmetic,equipCosmetic,updateTractor,updateCross,BUILDS,RIVALS,roadWidth,CROWD_DIALOGUE,makeCrowd,CHARACTERS,TRACKS,UPGRADES,CONTRACTS,clamp,freshSave,sanitizeSave,buyUpgrade,claimContract,buildTrack,pointAt,project,rectangleClear,makeRace,tick,ranking,useItem,settleRace,finishResult,formatTime,ghostAt
+    COMBAT_RIGS,gunCapacity,shortcutWidth,updateRouteEvent,makeCourseHazards,updateCourseHazards,WEAPON_UPGRADES,buyWeaponUpgrade,WEAPONS,COMBAT_TRACKS,COMBAT_TRACK,fireShot,updateCombat,CATALOG,catalogUnlocked,buyCosmetic,equipCosmetic,updateTractor,updateCross,BUILDS,RIVALS,roadWidth,CROWD_DIALOGUE,makeCrowd,CHARACTERS,TRACKS,UPGRADES,CONTRACTS,clamp,freshSave,sanitizeSave,buyUpgrade,claimContract,buildTrack,pointAt,project,rectangleClear,makeRace,tick,ranking,useItem,settleRace,finishResult,formatTime,ghostAt
   };
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
   else root.FarmRace=api;
