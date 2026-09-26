@@ -731,7 +731,7 @@
       }
       const factor=a.slow>0?.48:a.boost>0?(isPlayer?2.05:1.5):sprint?1.32:a.cornerBoost>0?1.12:a.draft>.5?1.09:1;
       const desired=base*factor*(isPlayer&&input.analog?Math.min(1,len):1)*(r.combat&&a.gun.rearFire>0?.85:1)*(offroad?(isPlayer?.53+r.up.boots*.065:.6):1)*(len>0?1:0);
-      const grip=isPlayer?(r.character.grip+r.up.boots*1.8)*r.build.grip*(a.boost>0?.42:1):8,blend=1-Math.exp(-grip*dt);
+      const grip=isPlayer?(r.character.grip+r.up.boots*1.8)*r.build.grip*(input.analog?1.4:1)*(a.boost>0?.42:1):8,blend=1-Math.exp(-grip*dt);
       a.vx+=(dx*desired-a.vx)*blend;
       a.vy+=(dy*desired-a.vy)*blend;
       a.x=clamp(a.x+(a.vx+a.hitPushX)*dt,10,(r.track.worldWidth||480)-10);

@@ -423,7 +423,7 @@
           };
           if(race.combat&&sticks.aim.id!==null){
             const a=sticks.aim,p=race.actors[0],distance=Math.hypot(a.x,a.y);
-            input.fire=distance>.25;input.aimX=distance>.15?p.x+a.x*180:undefined;input.aimY=distance>.15?p.y+a.y*180:undefined;
+            input.fire=distance>.18;input.aimX=distance>.08?p.x+a.x*180:undefined;input.aimY=distance>.08?p.y+a.y*180:undefined;
           }
           C.tick(race,input,1/120);
           if(race.combat){
@@ -505,8 +505,8 @@
     const el=$(id),stick=sticks[name];
     const move=event=>{
       if(event.pointerId!==stick.id)return;event.preventDefault();
-      const box=el.getBoundingClientRect(),radius=box.width*.34,dx=(event.clientX-box.left-box.width/2)/radius,dy=(event.clientY-box.top-box.height/2)/radius,length=Math.hypot(dx,dy);
-      const strength=Math.min(1,Math.max(0,(length-.12)/.88));
+      const box=el.getBoundingClientRect(),radius=box.width*.28,dx=(event.clientX-box.left-box.width/2)/radius,dy=(event.clientY-box.top-box.height/2)/radius,length=Math.hypot(dx,dy);
+      const strength=Math.pow(Math.min(1,Math.max(0,(length-.07)/.93)),.85);
       stick.x=length?dx/length*strength:0;stick.y=length?dy/length*strength:0;
       el.querySelector('.stick-knob').style.transform=`translate(calc(-50% + ${stick.x*radius}px), calc(-50% + ${stick.y*radius}px))`;
     };
