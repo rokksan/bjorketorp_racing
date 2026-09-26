@@ -707,7 +707,15 @@
       for(let i=0;i<7;i++){const x=o.x+Math.cos(i*2.4)*6,y=o.y+Math.sin(i*2.4)*4;rect(ctx,x,y,2,3,i%2?'#b1e2c1':'#3b8168');rect(ctx,x,y,1,1,'#fff4d5');}
       ctx.restore();
     });
-    for(const c of r.cornPoints)if(c.collectedLap<r.actors[0].lap)corn(ctx,c.x,c.y+(reduced?0:Math.round(Math.sin(time*3+c.x)*1)));
+    for(const c of r.cornPoints)if(c.collectedLap<r.actors[0].lap){
+      const phase=time*4+c.x*.035,bounce=reduced?0:Math.round((Math.sin(phase)+1)*3);
+      // Keep the ground marker at the pickup position while the coin bounces above it.
+      rect(ctx,c.x-6,c.y+5,12,3,'#3b342477');
+      ctx.save();ctx.translate(c.x,c.y-bounce);
+      if(!reduced)ctx.scale(.55+.45*Math.abs(Math.cos(time*2.8+c.x*.035)),1);
+      corn(ctx,0,0);ctx.restore();
+      if(!reduced){const angle=time*2+c.x*.035,sx=Math.round(c.x+Math.cos(angle)*10),sy=Math.round(c.y-bounce+Math.sin(angle)*10);rect(ctx,sx-2,sy,5,1,'#fff7cf');rect(ctx,sx,sy-2,1,5,'#fff7cf');}
+    }
     if(r.options.mode!=='trial')for(const p of r.pickups)if(p.collectedLap<r.actors[0].lap) {
       rect(ctx,p.x-5,p.y+4,11,2,'#9c895a88');
       egg(ctx,p.x,p.y+(reduced?0:Math.round(Math.sin(time*4+p.x)*2)),p.kind);
