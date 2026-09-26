@@ -120,7 +120,7 @@
       rect(ctx,x+14-w/2+2,y+2+i*5,Math.max(2,w/2),2,P.leafLight);
     }
   }
-  function coop(ctx,x,y,level=0) {
+  function coop(ctx,x,y,level=0,showFlag=true) {
     rect(ctx,x+4,y+41,66,5,'#45644566');
     rect(ctx,x+6,y+20,57,24,'#d6b784');
     rect(ctx,x+6,y+40,57,4,P.wood);
@@ -143,7 +143,7 @@
     rect(ctx,x+55,y-5,1,12,P.ink);rect(ctx,x+52,y-5,7,1,'#8ce6d5');
     rect(ctx,x+25,y+43,21,3,P.roadShadow);
     rect(ctx,x+22,y+46,27,2,P.roadLight);
-    if(level>0) {
+    if(level>0&&showFlag) {
       rect(ctx,x+59,y+7,3,12,P.brown);
       swedishFlag(ctx,x+62,y+7,10,6);
     }
@@ -673,7 +673,7 @@
     rect(ctx,0,153,480,19,P.road);
     if(save.cup?.titles){rect(ctx,304,89,12,8,P.gold);rect(ctx,309,97,3,9,P.gold);rect(ctx,304,105,12,3,P.cream);}
     const level=Object.values(save.upgrades).reduce((a,b)=>a+b,0);
-    coop(ctx,204,81,level);
+    coop(ctx,204,81,level,false);
     fence(ctx,53,111,106);
     fence(ctx,320,111,100);
     for(let row=0;row<3;row++)for(let col=0;col<8;col++) {
@@ -700,7 +700,6 @@
       rect(ctx,x,150-h,4,h,'#c96539');rect(ctx,x+1,152-h,2,h-2,'#f2bf58');
     }
     if(time>0)for(let i=0;i<3;i++){const rise=(time*9+i*9)%25;rect(ctx,99+Math.sin(time+i)*3,137-rise,5,4,'#6b686577');}
-    swedishFlag(ctx,350,70);rect(ctx,349,68,1,30,P.brown);
     prop(ctx,'caravan',112,118);
     prop(ctx,'wreckhouse',370,78);
     prop(ctx,'bushnap',432,143);
@@ -708,10 +707,8 @@
     prop(ctx,'bottles',404,120);
     if(time>0){const rise=(time*7)%13;rect(ctx,147,119-rise,3,2,'#ddd3bf88');}
     for(const [x,y] of [[10,122],[435,123],[21,174],[311,169]])flowers(ctx,x,y,'spring');
-    if(save.races>=3) {
-      rect(ctx,286,91,2,34,P.brown);
-      swedishFlag(ctx,288,91,15,9);
-    }
+    rect(ctx,286,91,2,34,P.brown);
+    swedishFlag(ctx,288,91,15,9);
   }
   root.FarmArt= {
     crossRider,crossScene,crowdBubble,P,bird,rect,prop,scrapCar,swedishFlag,farmer,chicken,tree,coop,egg,corn,hay,mud,makeScene,makeBackground,render,drawPortrait,drawUpgrade,drawFarm
