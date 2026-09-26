@@ -1,103 +1,49 @@
 <!doctype html>
 <html lang="sv">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Björketorp marknad: Hönsrace 2000</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#304b42"><meta name="description" content="Ett litet hönsrace med stort gårdshjärta. Tävla, samla majs och bygg din egen mästargård.">
+  <title>Hönsrace 2000 · Björketorp</title><link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main class="game-shell">
-    <header class="brand">
-      <div>
-        <p class="eyebrow">Björketorp marknad presenterar</p>
-        <h1>Hönsrace <span>2000</span></h1>
-      </div>
-      <div class="header-actions">
-        <p class="tagline">Gasa, gödsla och ge järnet!</p>
-        <div class="audio-controls" aria-label="Ljudinställningar">
-          <button type="button" id="sound-toggle" class="audio-button" aria-pressed="true">🔊 Ljud</button>
-          <button type="button" id="music-toggle" class="audio-button" aria-pressed="true">♫ Musik</button>
-        </div>
-      </div>
-    </header>
+    <header class="brand"><a href="#" id="home-link" aria-label="Till gården"><span class="brand-icon" aria-hidden="true">✦</span><span>BJÖRKETORP<small>HÖNSRACE 2000</small></span></a><div class="header-actions"><span id="save-indicator">Sparas på den här enheten</span><button id="help-button" class="icon-button" aria-label="Så spelar du">?</button><button id="settings-button" class="icon-button" aria-label="Ljudinställningar">♫</button></div></header>
 
-    <section class="game-frame" aria-label="Spelområde">
-      <canvas id="game" width="1100" height="700"></canvas>
-      <div id="touch-controls" class="touch-controls" aria-label="Touchkontroller">
-        <div class="touch-pad" aria-label="Styrning">
-          <button type="button" data-control-key="ArrowUp" aria-label="Upp">▲</button>
-          <button type="button" data-control-key="ArrowLeft" aria-label="Vänster">◀</button>
-          <button type="button" data-control-key="ArrowDown" aria-label="Ner">▼</button>
-          <button type="button" data-control-key="ArrowRight" aria-label="Höger">▶</button>
-        </div>
-        <button type="button" id="touch-item" class="touch-item">POWER-UP</button>
-      </div>
-      <div id="start-panel" class="panel">
-        <p class="eyebrow">Lördagens stora evenemang</p>
-        <h2>Vem är gårdens snabbaste höna?</h2>
-        <p>Styr med <strong>WASD</strong> eller piltangenterna. Plocka upp power-ups och kör tre varv!</p>
-        <aside class="legend-card">
-          <strong>MARKNADENS LEGEND</strong>
-          <p>Emil “Kladdis” Callheim körde banan på <b>0:42.0</b>. Ingen har varit nära sedan dess.</p>
-          <small>”Han var snabbare än tuppen på fri fot.” – Siv i depån</small>
-        </aside>
-        <fieldset>
-          <legend>Välj bana</legend>
-          <label><input type="radio" name="track" value="market" checked> Björketorp marknad <small>Den klassiska marknadsbanan</small></label>
-          <label><input type="radio" name="track" value="meadow"> Kladdis ängsslinga <small>Snabbare svepande kurvor</small></label>
-          <label><input type="radio" name="track" value="orchard"> Äppellundens åtta <small>Teknisk bana med fler svängar</small></label>
-        </fieldset>
-        <fieldset>
-          <legend>Motståndarnas svårighetsgrad</legend>
-          <label><input type="radio" name="difficulty" value="easy" checked> Lugn gårdstur</label>
-          <label><input type="radio" name="difficulty" value="normal"> Marknadstempo</label>
-          <label><input type="radio" name="difficulty" value="hard"> Tu do or die</label>
-        </fieldset>
-        <fieldset class="chicken-select">
-          <legend>Välj din tävlingshöna</legend>
-          <label><input type="radio" name="chicken" value="original" checked> <b>Gårds-Greta</b><small>Pålitlig och balanserad</small></label>
-          <label><input type="radio" name="chicken" value="rocket"> <b>Raket-Ragnhild</b><small>Två raketmotorer och vansinnig fart</small></label>
-          <label><input type="radio" name="chicken" value="armor"> <b>Pansar-Pär</b><small>Höbalssäker med traktorpansar</small></label>
-          <label><input type="radio" name="chicken" value="bomber"> <b>Ägg-Bombaren</b><small>Startar med en extra lerbomb</small></label>
-        </fieldset>
-        <button id="start-button">Starta loppet</button>
-      </div>
-      <div id="finish-panel" class="panel hidden">
-        <p class="eyebrow">Målgång!</p>
-        <h2 id="finish-title">Bra jobbat!</h2>
-        <p id="finish-copy"></p>
-        <p id="finish-stats" class="finish-stats"></p>
-        <p id="finish-progress" class="finish-progress"></p>
-        <div class="records-wrap">
-          <h3>Lokala banrekord</h3>
-          <table id="record-table">
-            <thead><tr><th>Plats</th><th>Höna</th><th>Tid</th><th>Bana</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <button id="restart-button">Kör igen</button>
-      </div>
-      <div id="pause-panel" class="panel hidden">
-        <p class="eyebrow">Loppet pausat</p>
-        <h2>Depåstopp!</h2>
-        <button id="resume-button">Fortsätt loppet</button>
-        <button id="pause-restart-button">Starta om loppet</button>
-        <button id="menu-button">Till huvudmenyn</button>
-      </div>
+    <section id="hub" aria-label="Din gård">
+      <div class="welcome-strip"><span>EN LITEN GÅRD. ETT STORT RACE.</span><span id="season-label">VÅR I BJÖRKETORP</span></div>
+      <div class="hero"><canvas id="farm-scene" width="480" height="180" aria-label="Din pixelgård med hönshus och odlingar"></canvas><div class="hero-title"><p>VÄLKOMMEN TILL</p><h1>Hönsrace<span>2000</span></h1><p>Från gårdshöna till bygdens legend.</p></div><div class="farm-sign"><span id="farm-level">LILLA HÖNSGÅRDEN</span><small id="farm-level-copy">Ditt nästa äventyr börjar vid startlinjen.</small></div></div>
+      <div class="farm-wallet"><div><span class="coin-icon" aria-hidden="true"></span><strong id="coin-count">0</strong><span>gårdsmynt</span></div><div><span id="races-count">0 lopp</span><span class="divider">/</span><span id="medal-count">0 medaljer</span></div><div class="xp-wrap"><span id="xp-label">Gårdsnivå 1</span><div class="xp-track"><i id="xp-bar"></i></div></div></div>
+      <nav class="hub-tabs" aria-label="Gårdsmeny"><button class="active" data-view="race" aria-pressed="true">01 <span>Till start</span></button><button data-view="workshop" aria-pressed="false">02 <span>Hönshuset</span></button><button data-view="journal" aria-pressed="false">03 <span>Gårdsboken</span></button></nav>
+
+      <section id="race-view" class="hub-view">
+        <div class="section-heading"><div><p class="eyebrow">DAGENS UTFLYKT</p><h2>Välj din nästa runda</h2></div><span id="session-summary" class="small-note">3 varv · cirka 1 minut · 5 hönor</span></div>
+        <div id="track-cards" class="track-cards" role="group" aria-label="Välj bana"></div>
+        <div class="race-setup"><fieldset class="chicken-field"><legend>VEM STÅR PÅ STARTLINJEN?</legend><div id="chicken-cards" class="chicken-cards"></div><p id="chicken-perk" class="setup-note"></p></fieldset><div class="race-options"><label for="difficulty">TÄVLINGSTEMPO</label><select id="difficulty"><option value="easy">Lugn gårdstur</option><option value="normal">Marknadstempo</option><option value="hard">Bygdens elit</option></select><label for="mode">SPELFORM</label><select id="mode"><option value="race">Gårdslopp · belöningar &amp; rivaler</option><option value="trial">Tidsträning · lika förutsättningar</option></select><p id="mode-copy" class="setup-note">Alla målgångar ger gårdsmynt. En pallplats ger medalj!</p></div></div>
+        <div class="start-row"><p><b>Små kliv. Stora drömmar.</b><span id="start-copy">Samla majs, hitta din linje och spara en spurt till slutet.</span></p><button id="start-button" class="primary">Till startlinjen <span aria-hidden="true">→</span></button></div>
+        <p class="keyboard-legend"><kbd>WASD</kbd> / <kbd>↑↓←→</kbd> styr <span>·</span> <kbd>Shift</kbd> spurt <span>·</span> <kbd>Space</kbd> föremål <span>·</span> <kbd>Esc</kbd> paus</p>
+      </section>
+
+      <section id="workshop-view" class="hub-view hidden" aria-label="Hönshuset"><div class="section-heading"><div><p class="eyebrow">LITE OMSORG GÖR SKILLNAD</p><h2>Ett bättre hönsliv</h2></div><span class="small-note">För hela ditt stall</span></div><p class="intro-copy">Investera prispengarna i gården. Varje uppgradering gäller alla dina hönor i gårdslopp. Tidsträning körs alltid utan uppgraderingar.</p><div id="upgrade-cards" class="upgrade-cards"></div><div class="wardrobe"><h3>En fjäder i hatten</h3><p>Förtjäna nya tävlingshalsdukar längs vägen.</p><div id="skin-buttons"></div></div></section>
+
+      <section id="journal-view" class="hub-view hidden" aria-label="Gårdsboken"><div class="section-heading"><div><p class="eyebrow">EN SIDA I TAGET</p><h2>Din väg till bygdens legend</h2></div></div><div id="unlock-note" class="unlock-note"></div><h3>Små uppdrag, fina belöningar</h3><p class="intro-copy">Hämta belöningen när ett uppdrag är klart. Sedan börjar nästa omgång.</p><div id="contract-cards" class="contract-cards"></div><h3>Medaljhyllan</h3><p class="intro-copy">Brons för tredjeplats, silver för andra och guld för seger. Vinn alla tre banor i marknadstempo för att låsa upp guldhalsduken.</p><div id="medal-shelf" class="medal-shelf"></div></section>
     </section>
 
-    <footer class="controls">
-      <span><b>WASD / pilar</b> styr</span>
-      <span><b>Space</b> använder sparad power-up</span>
-      <span><i class="legend-dot boost"></i> Gult ägg = fartboost</span>
-      <span><i class="legend-dot muck"></i> Brunt ägg = lerbomb</span>
-      <span><i class="legend-dot shield"></i> Blått ägg = sköld</span>
-      <span><i class="legend-dot nutella"></i> Nutella = riskfylld superboost</span>
-      <span>Följ vägen och kör tre hela varv</span>
-      <span>Publiken kan kasta flaskor – håll utkik!</span>
-    </footer>
+    <section id="race-screen" class="hidden" aria-label="Loppet">
+      <div class="race-topline"><span id="race-track-name"></span><span id="race-mode-label"></span></div>
+      <div id="race-hud" class="race-hud"><div><small>PLACERING</small><strong id="hud-position">1<em>/5</em></strong></div><div><small>VARV</small><strong id="hud-lap">1<em>/3</em></strong></div><div class="hud-timer"><small>TID</small><strong id="hud-time">0:00.0</strong></div><div class="hud-corn"><small>MAJS</small><strong id="hud-corn">0</strong></div><button id="pause-button" class="icon-button" aria-label="Pausa loppet">Ⅱ</button></div>
+      <div id="crowd-caption" class="crowd-caption" role="status"></div><div class="playfield"><canvas id="game" width="480" height="300" tabindex="0" aria-label="Racerbana. Styr med WASD eller pilar, spurta med Shift och använd föremål med Space."></canvas><div id="countdown" class="countdown hidden" aria-live="assertive"><small>GÖR DIG REDO</small><strong>3</strong></div><div id="race-toast" class="race-toast hidden" role="status"></div></div>
+      <div class="race-bottom"><div class="stamina"><span><b id="stamina-label">SPURT</b> <kbd>SHIFT</kbd></span><div><i id="stamina-fill"></i></div></div><button id="item-button" class="item-slot"><span id="item-name">Inget föremål</span><kbd>SPACE</kbd></button><div class="lap-clock"><small>DET HÄR VARVET</small><b id="lap-time">0:00.0</b></div></div>
+      <div class="touch-controls" aria-label="Pekkontroller"><div class="dpad"><button data-key="ArrowUp" aria-label="Styr upp">▲</button><button data-key="ArrowLeft" aria-label="Styr vänster">◀</button><button data-key="ArrowDown" aria-label="Styr ner">▼</button><button data-key="ArrowRight" aria-label="Styr höger">▶</button></div><button data-key="Shift" class="touch-sprint">HÅLL<br>SPURT</button><button id="touch-item">ANVÄND<br>FÖREMÅL</button></div>
+      <p id="race-tip" class="race-tip">Den ljusa stigen är din bana. Majs ger extra gårdsmynt när du går i mål.</p>
+    </section>
+
+    <section id="results" class="results hidden" aria-label="Resultat"><div class="result-banner"><p class="eyebrow">MÅLGÅNG I BJÖRKETORP</p><h2 id="result-title">Vilket lopp!</h2><canvas id="result-bird" width="96" height="68" aria-label="Din tävlingshöna"></canvas><p id="result-copy"></p></div><div id="result-stats" class="result-stats"></div><div id="result-rewards" class="result-rewards"></div><div id="result-unlocks" class="unlock-note hidden"></div><div class="result-columns"><div><h3>Startfältet</h3><ol id="result-ranking"></ol></div><div><h3>Dina varv</h3><ol id="result-laps"></ol></div></div><div class="result-actions"><button id="restart-button" class="primary">En runda till →</button><button id="finish-menu-button" class="secondary">Till gården &amp; uppgradera</button></div></section>
+    <footer><span>GJORT MED HJÄRTA, HÖ OCH LITE TÄVLINGSINSTINKT.</span><span>BJÖRKETORP · 2000</span></footer>
   </main>
-  <script src="game.js"></script>
+  <dialog id="pause-dialog" aria-labelledby="pause-heading"><p class="eyebrow">EN LITEN ANDNINGSPAUS</p><h2 id="pause-heading">Vila vingarna.</h2><p>Loppet väntar på dig.</p><button id="resume-button" class="primary">Fortsätt loppet →</button><button id="pause-restart-button" class="secondary">Börja om loppet</button><button id="pause-audio-button" class="quiet">Ljudinställningar ♫</button><button id="menu-button" class="quiet">Till gården · avbryt loppet</button></dialog>
+  <dialog id="settings-dialog" aria-labelledby="settings-heading"><button class="dialog-close" data-close="settings-dialog" aria-label="Stäng ljudinställningar">×</button><p class="eyebrow">GÅRDENS LJUD</p><h2 id="settings-heading">Hitta din volym.</h2><p>Egna chiptunes, prasslande steg och fågelsång.</p><label class="slider-label">Musik <output id="music-value"></output><input id="music-volume" type="range" min="0" max="100" step="5"></label><label class="slider-label">Ljudeffekter <output id="sfx-value"></output><input id="sfx-volume" type="range" min="0" max="100" step="5"></label><label class="slider-label">Gårdsatmosfär <output id="ambience-value"></output><input id="ambience-volume" type="range" min="0" max="100" step="5"></label><button id="mute-button" class="secondary" aria-pressed="false">Stäng av allt ljud</button><button id="sound-test" class="quiet">Spela ett provljud ♫</button></dialog>
+  <dialog id="help-dialog" aria-labelledby="help-heading"><button class="dialog-close" data-close="help-dialog" aria-label="Stäng spelhjälp">×</button><p class="eyebrow">EN SNABB TUR GENOM REGLERNA</p><h2 id="help-heading">Redo, höna, kör!</h2><p>Följ de vita pilarna runt banan i tre varv. Din höna har en gul pil över huvudet.</p><dl><dt>Pilar / WASD</dt><dd>Styr i skärmens riktning. Släpp för att bromsa.</dd><dt>Shift / spurtknappen</dt><dd>Håll för att spurta. Släpp knappen för att återhämta dig.</dd><dt>Space / föremålsknappen</dt><dd>Gult ägg ger fart, blått ger skydd, brunt kastar lera på en rival i närheten.</dd><dt>Majskorn</dt><dd>Varje korn ger två extra gårdsmynt vid målgång.</dd><dt>Arga bönder</dt><dd>Publiken kastar flaskor, äpplen och stövlar. Väj för röda landningsringar eller använd äggskölden. I tidsträning hejar de bara.</dd><dt>Gräs &amp; hinder</dt><dd>Gräset bromsar. Höbalar och lerpölar ligger vid banans kant.</dd></dl><p>Alla slutförda gårdslopp ger belöningar. Tidsträning är solo, utan uppgraderingar eller belöningar. Ditt personbästa blir en spökhöna att tävla mot nästa gång.</p><button data-close="help-dialog" class="primary">Det här fixar jag →</button></dialog>
+  <div id="global-toast" class="global-toast hidden" role="status"></div>
+  <script src="js/core.js"></script><script src="js/art.js"></script><script src="js/audio.js"></script><script src="game.js"></script>
 </body>
 </html>
